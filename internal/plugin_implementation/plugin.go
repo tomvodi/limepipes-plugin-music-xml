@@ -2,7 +2,7 @@ package plugin_implementation
 
 import (
 	"fmt"
-	"github.com/tomvodi/limepipes-plugin-api/plugin/v1/file_type"
+	"github.com/tomvodi/limepipes-plugin-api/plugin/v1/fileformat"
 	plugininterfaces "github.com/tomvodi/limepipes-plugin-api/plugin/v1/interfaces"
 	"github.com/tomvodi/limepipes-plugin-api/plugin/v1/messages"
 )
@@ -22,7 +22,7 @@ func (p *plug) PluginInfo() (*messages.PluginInfoResponse, error) {
 	return &messages.PluginInfoResponse{
 		Name:           "MusicXML Plugin",
 		Description:    "Import Bagpipe Music Writer and Bagpipe Player files.",
-		FileType:       file_type.Type_MUSIC_XML,
+		FileFormat:     fileformat.Format_MUSIC_XML,
 		Type:           messages.PluginType_OUT,
 		FileExtensions: []string{".xml", ".musicxml"},
 	}, nil
