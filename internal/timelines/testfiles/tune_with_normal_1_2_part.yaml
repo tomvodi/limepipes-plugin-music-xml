@@ -1,0 +1,29 @@
+- title: Tune Title
+  measures:
+  - {}
+  - left_barline:
+      type: Heavy
+      time: Repeat
+    right_barline:
+      type: Heavy
+      time: Repeat
+    symbols:
+    - note:
+        pitch: B
+        length: Quarter
+    - timeline:
+        type: First
+        boundary_type: Start
+    - note:
+        pitch: D
+        length: Quarter
+    - timeline:
+        boundary_type: End
+    - timeline:
+        type: Second
+        boundary_type: Start
+    - note:
+        pitch: E
+        length: Quarter
+    - timeline:
+        boundary_type: End
