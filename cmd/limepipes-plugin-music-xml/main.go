@@ -4,7 +4,8 @@ import (
 	"github.com/hashicorp/go-plugin"
 	"github.com/tomvodi/limepipes-plugin-api/plugin/v1/common"
 	"github.com/tomvodi/limepipes-plugin-api/plugin/v1/fileformat"
-	"github.com/tomvodi/limepipes-plugin-api/plugin/v1/grpc_plugin"
+	"github.com/tomvodi/limepipes-plugin-api/plugin/v1/grpcplugin"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/musicmodel/expander"
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/plugin_implementation"
 	"google.golang.org/grpc"
 )
@@ -16,12 +17,14 @@ func defaultGRPCServer(opts []grpc.ServerOption) *grpc.Server {
 }
 
 func main() {
-	impl := plugin_implementation.NewPluginImplementation()
+	impl := plugin_implementation.NewPluginImplementation(
+		expander.NewEmbellishmentExpander(),
+	)
 
 	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: common.HandshakeConfig,
 		Plugins: map[string]plugin.Plugin{
-			fileformat.Format_MUSIC_XML.String(): grpc_plugin.NewGrpcPlugin(
+			fileformat.Format_MUSIC_XML.String(): grpcplugin.NewGrpcPlugin(
 				impl,
 			),
 		},

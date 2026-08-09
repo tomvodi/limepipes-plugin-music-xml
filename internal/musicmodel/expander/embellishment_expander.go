@@ -1,58 +1,78 @@
 package expander
 
 import (
-	"banduslib/internal/common"
-	"banduslib/internal/common/music_model"
-	"banduslib/internal/interfaces"
 	"github.com/rs/zerolog/log"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/musicmodel"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/pitch"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/tune"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/interfaces"
 )
 
 type embExpander struct {
 	table ExpandTable
 }
 
-func (e *embExpander) ExpandModel(model music_model.MusicModel) {
-	for _, tune := range model {
-		e.ExpandTune(tune)
+func (e *embExpander) ExpandModel(model musicmodel.MusicModel) interfaces.Expansions {
+	exps := interfaces.Expansions{}
+	for _, t := range model {
+		e.expandTuneInto(t, exps)
 	}
+
+	return exps
 }
 
-func (e *embExpander) ExpandTune(tune *music_model.Tune) {
-	prevSymPitch := common.NoPitch
-	for _, measure := range tune.Measures {
-		for _, symbol := range measure.Symbols {
-			e.expandSymbol(symbol, prevSymPitch)
+func (e *embExpander) ExpandTune(t *tune.Tune) interfaces.Expansions {
+	exps := interfaces.Expansions{}
+	e.expandTuneInto(t, exps)
+
+	return exps
+}
+
+func (e *embExpander) expandTuneInto(t *tune.Tune, exps interfaces.Expansions) {
+	if t == nil {
+		return
+	}
+
+	prevSymPitch := pitch.Pitch_NoPitch
+	for _, m := range t.Measures {
+		for _, symbol := range m.Symbols {
+			if expanded := e.expandSymbol(symbol, prevSymPitch); expanded != nil {
+				exps[symbol.Note] = expanded
+			}
 
 			if symbol.IsValidNote() {
 				prevSymPitch = symbol.Note.Pitch
 			} else {
-				prevSymPitch = common.NoPitch
+				prevSymPitch = pitch.Pitch_NoPitch
 			}
 		}
 	}
 }
 
-func (e *embExpander) expandSymbol(symbol *music_model.Symbol, prevSymPitch common.Pitch) {
+func (e *embExpander) expandSymbol(
+	symbol *symbols.Symbol,
+	prevSymPitch pitch.Pitch,
+) []pitch.Pitch {
 	if !symbol.IsValidNote() {
-		return
+		return nil
 	}
 
 	if symbol.Note.Embellishment == nil {
-		return
+		return nil
 	}
 
-	expander, ok := e.table[*symbol.Note.Embellishment]
+	expander, ok := e.table[keyFromEmbellishment(symbol.Note.Embellishment)]
 	if !ok {
-		log.Error().Msgf("no embellishment expander for %v", *symbol.Note.Embellishment)
-		return
+		log.Error().Msgf("no embellishment expander for %v", symbol.Note.Embellishment)
+		return nil
 	}
 
-	expander.ExpandSymbol(symbol, prevSymPitch)
+	return expander.ExpandSymbol(symbol, prevSymPitch)
 }
 
 func NewEmbellishmentExpander() interfaces.EmbellishmentExpander {
-	table := newSymbolExpanderTable()
 	return &embExpander{
-		table: table,
+		table: newSymbolExpanderTable(),
 	}
 }

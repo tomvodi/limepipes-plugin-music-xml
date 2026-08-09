@@ -1,23 +1,26 @@
 package expander
 
 import (
-	"banduslib/internal/common"
-	"banduslib/internal/common/music_model"
-	"banduslib/internal/interfaces"
 	"github.com/rs/zerolog/log"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/pitch"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/interfaces"
 )
 
 type dblGraceExpand struct {
 }
 
-func (d *dblGraceExpand) ExpandSymbol(symbol *music_model.Symbol, _ common.Pitch) {
+func (d *dblGraceExpand) ExpandSymbol(
+	symbol *symbols.Symbol,
+	_ pitch.Pitch,
+) []pitch.Pitch {
 	if symbol == nil || symbol.Note == nil || symbol.Note.Embellishment == nil {
-		return
+		return nil
 	}
 
-	if symbol.Note.Pitch == common.LowG {
+	if symbol.Note.Pitch == pitch.Pitch_LowG {
 		log.Error().Msg("can't play double grace on LowG")
-		return
+		return nil
 	}
 
 	emb := symbol.Note.Embellishment
@@ -25,10 +28,10 @@ func (d *dblGraceExpand) ExpandSymbol(symbol *music_model.Symbol, _ common.Pitch
 	if symbol.Note.Pitch > emb.Pitch {
 		log.Error().Msgf("can't play double grace %s on a melody note with pitch %s",
 			emb.Pitch.String(), symbol.Note.Pitch.String())
-		return
+		return nil
 	}
 
-	symbol.Note.ExpandedEmbellishment = []common.Pitch{
+	return []pitch.Pitch{
 		emb.Pitch,
 		symbol.Note.Pitch - 1,
 	}

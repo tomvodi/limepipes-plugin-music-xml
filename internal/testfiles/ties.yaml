@@ -1,0 +1,23 @@
+- title: Tune Title
+  measures:
+  - symbols:
+    - note:
+        pitch: LowG
+        length: Quarter
+        tie: Start
+    - note:
+        pitch: LowG
+        length: Quarter
+        tie: End
+    - note:
+        pitch: D
+        length: Quarter
+    - note:
+        pitch: C
+        length: Quarter
+        tie: Start
+  - symbols:
+    - note:
+        pitch: C
+        length: Quarter
+        tie: End

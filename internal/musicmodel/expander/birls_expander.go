@@ -1,37 +1,56 @@
 package expander
 
 import (
-	c "banduslib/internal/common"
-	"banduslib/internal/common/music_model"
-	"banduslib/internal/common/music_model/symbols/embellishment"
-	"banduslib/internal/interfaces"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/pitch"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols/embellishment"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/interfaces"
 )
 
 type birlsExp struct {
 }
 
-func (b *birlsExp) ExpandSymbol(symbol *music_model.Symbol, prevSymPitch c.Pitch) {
+func (b *birlsExp) ExpandSymbol(
+	symbol *symbols.Symbol,
+	prevSymPitch pitch.Pitch,
+) []pitch.Pitch {
 	if symbol == nil || symbol.Note == nil || symbol.Note.Embellishment == nil {
-		return
+		return nil
 	}
 
 	emb := symbol.Note.Embellishment
 
-	var expanded []c.Pitch
-	isHalf := prevSymPitch == c.LowA
+	var expanded []pitch.Pitch
+	isHalf := prevSymPitch == pitch.Pitch_LowA
 	if isHalf {
-		expanded = []c.Pitch{c.LowG, c.LowA, c.LowG}
+		expanded = []pitch.Pitch{
+			pitch.Pitch_LowG, pitch.Pitch_LowA, pitch.Pitch_LowG,
+		}
 	}
-	if emb.Variant == embellishment.G {
-		expanded = []c.Pitch{c.HighG, c.LowA, c.LowG, c.LowA, c.LowG}
+	// A grace birl is a birl led by a single grace note. The model has one
+	// type for both the g grace and the thumb grace form, so it is always
+	// rendered as the g grace one.
+	if emb.Type == embellishment.Type_GraceBirl ||
+		emb.Variant == embellishment.Variant_G {
+		expanded = []pitch.Pitch{
+			pitch.Pitch_HighG, pitch.Pitch_LowA, pitch.Pitch_LowG,
+			pitch.Pitch_LowA, pitch.Pitch_LowG,
+		}
 	}
-	if emb.Variant == embellishment.Thumb {
-		expanded = []c.Pitch{c.HighA, c.LowA, c.LowG, c.LowA, c.LowG}
+	if emb.Variant == embellishment.Variant_Thumb {
+		expanded = []pitch.Pitch{
+			pitch.Pitch_HighA, pitch.Pitch_LowA, pitch.Pitch_LowG,
+			pitch.Pitch_LowA, pitch.Pitch_LowG,
+		}
 	}
 	if expanded == nil {
-		expanded = []c.Pitch{c.LowA, c.LowG, c.LowA, c.LowG}
+		expanded = []pitch.Pitch{
+			pitch.Pitch_LowA, pitch.Pitch_LowG,
+			pitch.Pitch_LowA, pitch.Pitch_LowG,
+		}
 	}
-	symbol.Note.ExpandedEmbellishment = expanded
+
+	return expanded
 }
 
 func NewBirlsExpander() interfaces.SymbolExpander {

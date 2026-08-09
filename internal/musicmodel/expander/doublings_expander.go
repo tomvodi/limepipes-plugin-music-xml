@@ -1,95 +1,95 @@
 package expander
 
 import (
-	"banduslib/internal/common"
-	"banduslib/internal/common/music_model"
-	"banduslib/internal/common/music_model/symbols"
-	"banduslib/internal/common/music_model/symbols/embellishment"
-	"banduslib/internal/interfaces"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/pitch"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols/embellishment"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/interfaces"
 )
 
 type dblExpand struct {
 }
 
-func (d *dblExpand) ExpandSymbol(symbol *music_model.Symbol, _ common.Pitch) {
+func (d *dblExpand) ExpandSymbol(
+	symbol *symbols.Symbol,
+	_ pitch.Pitch,
+) []pitch.Pitch {
 	if symbol == nil || symbol.Note == nil || symbol.Note.Embellishment == nil {
-		return
+		return nil
 	}
 
 	emb := symbol.Note.Embellishment
 
 	switch emb.Variant {
-	case embellishment.NoVariant:
-		handleRegular(symbol.Note)
-	case embellishment.Thumb:
-		handleThumb(symbol.Note)
-	case embellishment.Half:
-		handleHalf(symbol.Note)
+	case embellishment.Variant_NoVariant:
+		return handleRegular(symbol.Note)
+	case embellishment.Variant_Thumb:
+		return handleThumb(symbol.Note)
+	case embellishment.Variant_Half:
+		return handleHalf(symbol.Note)
 	}
+
+	return nil
 }
 
-func handleRegular(note *symbols.Note) {
-	if note.Pitch >= common.HighG {
-		note.ExpandedEmbellishment = []common.Pitch{
+func handleRegular(note *symbols.Note) []pitch.Pitch {
+	if note.Pitch >= pitch.Pitch_HighG {
+		return []pitch.Pitch{
 			note.Pitch,
 			note.Pitch - 1,
 		}
-		return
 	}
 
-	if note.Pitch >= common.D {
-		note.ExpandedEmbellishment = []common.Pitch{
-			common.HighG,
+	if note.Pitch >= pitch.Pitch_D {
+		return []pitch.Pitch{
+			pitch.Pitch_HighG,
 			note.Pitch,
 			note.Pitch + 1,
 		}
-		return
 	}
 
-	note.ExpandedEmbellishment = []common.Pitch{
-		common.HighG,
+	return []pitch.Pitch{
+		pitch.Pitch_HighG,
 		note.Pitch,
-		common.D,
+		pitch.Pitch_D,
 	}
 }
 
-func handleThumb(note *symbols.Note) {
-	if note.Pitch >= common.HighG {
-		return
+func handleThumb(note *symbols.Note) []pitch.Pitch {
+	if note.Pitch >= pitch.Pitch_HighG {
+		return nil
 	}
 
-	if note.Pitch >= common.D {
-		note.ExpandedEmbellishment = []common.Pitch{
-			common.HighA,
+	if note.Pitch >= pitch.Pitch_D {
+		return []pitch.Pitch{
+			pitch.Pitch_HighA,
 			note.Pitch,
 			note.Pitch + 1,
 		}
-		return
 	}
 
-	note.ExpandedEmbellishment = []common.Pitch{
-		common.HighA,
+	return []pitch.Pitch{
+		pitch.Pitch_HighA,
 		note.Pitch,
-		common.D,
+		pitch.Pitch_D,
 	}
 }
 
-func handleHalf(note *symbols.Note) {
-	if note.Pitch >= common.HighG {
-		return
+func handleHalf(note *symbols.Note) []pitch.Pitch {
+	if note.Pitch >= pitch.Pitch_HighG {
+		return nil
 	}
 
-	if note.Pitch >= common.D {
-		note.ExpandedEmbellishment = []common.Pitch{
+	if note.Pitch >= pitch.Pitch_D {
+		return []pitch.Pitch{
 			note.Pitch,
 			note.Pitch + 1,
 		}
-		return
 	}
 
-	note.ExpandedEmbellishment = []common.Pitch{
+	return []pitch.Pitch{
 		note.Pitch,
-		common.D,
+		pitch.Pitch_D,
 	}
 }
 

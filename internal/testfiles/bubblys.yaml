@@ -1,0 +1,19 @@
+- title: Tune Title
+  measures:
+  - symbols:
+    - note:
+        pitch: C
+        length: Quarter
+    - note:
+        pitch: LowA
+        length: Quarter
+        embellishment:
+          type: Bubbly
+    - note:
+        pitch: LowG
+        length: Quarter
+    - note:
+        pitch: LowA
+        length: Quarter
+        embellishment:
+          type: Bubbly

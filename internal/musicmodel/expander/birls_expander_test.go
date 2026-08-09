@@ -1,49 +1,50 @@
 package expander
 
 import (
-	c "banduslib/internal/common"
-	"banduslib/internal/common/music_model"
-	"banduslib/internal/common/music_model/symbols"
-	emb "banduslib/internal/common/music_model/symbols/embellishment"
-	"banduslib/internal/utils"
 	"fmt"
-	. "github.com/onsi/gomega"
 	"testing"
+
+	. "github.com/onsi/gomega"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/length"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/pitch"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols"
+	emb "github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols/embellishment"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/utils"
 )
 
-func regBirl() *music_model.Symbol {
-	return &music_model.Symbol{
+func regBirl() *symbols.Symbol {
+	return &symbols.Symbol{
 		Note: &symbols.Note{
-			Pitch:  c.LowA,
-			Length: c.Quarter,
+			Pitch:  pitch.Pitch_LowA,
+			Length: length.Length_Quarter,
 			Embellishment: &emb.Embellishment{
-				Type: emb.Birl,
+				Type: emb.Type_Birl,
 			},
 		},
 	}
 }
 
-func gBirl() *music_model.Symbol {
-	return &music_model.Symbol{
+func gBirl() *symbols.Symbol {
+	return &symbols.Symbol{
 		Note: &symbols.Note{
-			Pitch:  c.LowA,
-			Length: c.Quarter,
+			Pitch:  pitch.Pitch_LowA,
+			Length: length.Length_Quarter,
 			Embellishment: &emb.Embellishment{
-				Type:    emb.Birl,
-				Variant: emb.G,
+				Type:    emb.Type_Birl,
+				Variant: emb.Variant_G,
 			},
 		},
 	}
 }
 
-func thumbBirl() *music_model.Symbol {
-	return &music_model.Symbol{
+func thumbBirl() *symbols.Symbol {
+	return &symbols.Symbol{
 		Note: &symbols.Note{
-			Pitch:  c.LowA,
-			Length: c.Quarter,
+			Pitch:  pitch.Pitch_LowA,
+			Length: length.Length_Quarter,
 			Embellishment: &emb.Embellishment{
-				Type:    emb.Birl,
-				Variant: emb.Thumb,
+				Type:    emb.Type_Birl,
+				Variant: emb.Variant_Thumb,
 			},
 		},
 	}
@@ -53,9 +54,9 @@ func Test_birlsExpander_regular_ExpandSymbol(t *testing.T) {
 	utils.SetupConsoleLogger()
 	g := NewGomegaWithT(t)
 	type fields struct {
-		symbol    *music_model.Symbol
-		prevPitch c.Pitch
-		want      []c.Pitch
+		symbol    *symbols.Symbol
+		prevPitch pitch.Pitch
+		want      []pitch.Pitch
 	}
 	tests := []struct {
 		name    string
@@ -65,29 +66,29 @@ func Test_birlsExpander_regular_ExpandSymbol(t *testing.T) {
 			name: "regular",
 			prepare: func(f *fields) {
 				f.symbol = regBirl()
-				f.want = []c.Pitch{c.LowA, c.LowG, c.LowA, c.LowG}
+				f.want = []pitch.Pitch{pitch.Pitch_LowA, pitch.Pitch_LowG, pitch.Pitch_LowA, pitch.Pitch_LowG}
 			},
 		},
 		{
 			name: "regular with previous low g => 'half birl' ",
 			prepare: func(f *fields) {
 				f.symbol = regBirl()
-				f.prevPitch = c.LowA
-				f.want = []c.Pitch{c.LowG, c.LowA, c.LowG}
+				f.prevPitch = pitch.Pitch_LowA
+				f.want = []pitch.Pitch{pitch.Pitch_LowG, pitch.Pitch_LowA, pitch.Pitch_LowG}
 			},
 		},
 		{
 			name: "g birl",
 			prepare: func(f *fields) {
 				f.symbol = gBirl()
-				f.want = []c.Pitch{c.HighG, c.LowA, c.LowG, c.LowA, c.LowG}
+				f.want = []pitch.Pitch{pitch.Pitch_HighG, pitch.Pitch_LowA, pitch.Pitch_LowG, pitch.Pitch_LowA, pitch.Pitch_LowG}
 			},
 		},
 		{
 			name: "thumb birl",
 			prepare: func(f *fields) {
 				f.symbol = thumbBirl()
-				f.want = []c.Pitch{c.HighA, c.LowA, c.LowG, c.LowA, c.LowG}
+				f.want = []pitch.Pitch{pitch.Pitch_HighA, pitch.Pitch_LowA, pitch.Pitch_LowG, pitch.Pitch_LowA, pitch.Pitch_LowG}
 			},
 		},
 	}
@@ -101,9 +102,9 @@ func Test_birlsExpander_regular_ExpandSymbol(t *testing.T) {
 			}
 
 			pack := NewBirlsExpander()
-			pack.ExpandSymbol(f.symbol, f.prevPitch)
+			expanded := pack.ExpandSymbol(f.symbol, f.prevPitch)
 			want := fmt.Sprintf("%v", f.want)
-			got := fmt.Sprintf("%v", f.symbol.Note.ExpandedEmbellishment)
+			got := fmt.Sprintf("%v", expanded)
 			g.Expect(got).To(Equal(want))
 		})
 	}

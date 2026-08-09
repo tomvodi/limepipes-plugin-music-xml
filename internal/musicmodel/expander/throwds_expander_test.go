@@ -1,23 +1,24 @@
 package expander
 
 import (
-	c "banduslib/internal/common"
-	"banduslib/internal/common/music_model"
-	"banduslib/internal/common/music_model/symbols"
-	emb "banduslib/internal/common/music_model/symbols/embellishment"
-	"banduslib/internal/utils"
 	"fmt"
-	. "github.com/onsi/gomega"
 	"testing"
+
+	. "github.com/onsi/gomega"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/length"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/pitch"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols"
+	emb "github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols/embellishment"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/utils"
 )
 
-func regThrowd(weight emb.EmbellishmentWeight) *music_model.Symbol {
-	return &music_model.Symbol{
+func regThrowd(weight emb.Weight) *symbols.Symbol {
+	return &symbols.Symbol{
 		Note: &symbols.Note{
-			Pitch:  c.C,
-			Length: c.Quarter,
+			Pitch:  pitch.Pitch_C,
+			Length: length.Length_Quarter,
 			Embellishment: &emb.Embellishment{
-				Type:   emb.ThrowD,
+				Type:   emb.Type_ThrowD,
 				Weight: weight,
 			},
 		},
@@ -28,9 +29,9 @@ func Test_throwdExpander_regular_ExpandSymbol(t *testing.T) {
 	utils.SetupConsoleLogger()
 	g := NewGomegaWithT(t)
 	type fields struct {
-		symbol    *music_model.Symbol
-		prevPitch c.Pitch
-		want      []c.Pitch
+		symbol    *symbols.Symbol
+		prevPitch pitch.Pitch
+		want      []pitch.Pitch
 	}
 	tests := []struct {
 		name    string
@@ -39,31 +40,31 @@ func Test_throwdExpander_regular_ExpandSymbol(t *testing.T) {
 		{
 			name: "regular light",
 			prepare: func(f *fields) {
-				f.symbol = regThrowd(emb.Light)
-				f.want = []c.Pitch{c.LowG, c.D, c.C}
+				f.symbol = regThrowd(emb.Weight_Light)
+				f.want = []pitch.Pitch{pitch.Pitch_LowG, pitch.Pitch_D, pitch.Pitch_C}
 			},
 		},
 		{
 			name: "regular light with previous low g => half throwd",
 			prepare: func(f *fields) {
-				f.symbol = regThrowd(emb.Light)
-				f.prevPitch = c.LowG
-				f.want = []c.Pitch{c.D, c.C}
+				f.symbol = regThrowd(emb.Weight_Light)
+				f.prevPitch = pitch.Pitch_LowG
+				f.want = []pitch.Pitch{pitch.Pitch_D, pitch.Pitch_C}
 			},
 		},
 		{
 			name: "regular heavy",
 			prepare: func(f *fields) {
-				f.symbol = regThrowd(emb.Heavy)
-				f.want = []c.Pitch{c.LowG, c.D, c.LowG, c.C}
+				f.symbol = regThrowd(emb.Weight_Heavy)
+				f.want = []pitch.Pitch{pitch.Pitch_LowG, pitch.Pitch_D, pitch.Pitch_LowG, pitch.Pitch_C}
 			},
 		},
 		{
 			name: "regular heavy with previous low g => half throwd",
 			prepare: func(f *fields) {
-				f.symbol = regThrowd(emb.Heavy)
-				f.prevPitch = c.LowG
-				f.want = []c.Pitch{c.D, c.LowG, c.C}
+				f.symbol = regThrowd(emb.Weight_Heavy)
+				f.prevPitch = pitch.Pitch_LowG
+				f.want = []pitch.Pitch{pitch.Pitch_D, pitch.Pitch_LowG, pitch.Pitch_C}
 			},
 		},
 	}
@@ -77,9 +78,9 @@ func Test_throwdExpander_regular_ExpandSymbol(t *testing.T) {
 			}
 
 			pack := NewThrowdsExpander()
-			pack.ExpandSymbol(f.symbol, f.prevPitch)
+			expanded := pack.ExpandSymbol(f.symbol, f.prevPitch)
 			want := fmt.Sprintf("%v", f.want)
-			got := fmt.Sprintf("%v", f.symbol.Note.ExpandedEmbellishment)
+			got := fmt.Sprintf("%v", expanded)
 			g.Expect(got).To(Equal(want))
 		})
 	}

@@ -1,27 +1,33 @@
 package expander
 
 import (
-	c "banduslib/internal/common"
-	"banduslib/internal/common/music_model"
-	"banduslib/internal/interfaces"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/pitch"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/interfaces"
 )
 
 type bubblysExpand struct {
 }
 
-func (b *bubblysExpand) ExpandSymbol(symbol *music_model.Symbol, prevSymPitch c.Pitch) {
+func (b *bubblysExpand) ExpandSymbol(
+	symbol *symbols.Symbol,
+	prevSymPitch pitch.Pitch,
+) []pitch.Pitch {
 	if symbol == nil || symbol.Note == nil || symbol.Note.Embellishment == nil {
-		return
+		return nil
 	}
 
-	var expanded []c.Pitch
-	isHalf := prevSymPitch == c.LowG
+	isHalf := prevSymPitch == pitch.Pitch_LowG
 	if isHalf {
-		expanded = []c.Pitch{c.D, c.LowG, c.C, c.LowG}
-	} else {
-		expanded = []c.Pitch{c.LowG, c.D, c.LowG, c.C, c.LowG}
+		return []pitch.Pitch{
+			pitch.Pitch_D, pitch.Pitch_LowG, pitch.Pitch_C, pitch.Pitch_LowG,
+		}
 	}
-	symbol.Note.ExpandedEmbellishment = expanded
+
+	return []pitch.Pitch{
+		pitch.Pitch_LowG, pitch.Pitch_D, pitch.Pitch_LowG,
+		pitch.Pitch_C, pitch.Pitch_LowG,
+	}
 }
 
 func NewBubblysExpander() interfaces.SymbolExpander {

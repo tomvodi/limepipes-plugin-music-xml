@@ -1,17 +1,18 @@
 package barline
 
 import (
-	"banduslib/internal/common/music_model/barline"
-	"banduslib/internal/utils"
-	. "github.com/onsi/gomega"
 	"testing"
+
+	. "github.com/onsi/gomega"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/barline"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/utils"
 )
 
 func Test_convertBarlineType(t *testing.T) {
 	utils.SetupConsoleLogger()
 	g := NewGomegaWithT(t)
 	type fields struct {
-		barlineType barline.BarlineType
+		barlineType barline.Type
 		want        Style
 	}
 	tests := []struct {
@@ -21,35 +22,35 @@ func Test_convertBarlineType(t *testing.T) {
 		{
 			name: "Regular",
 			prepare: func(f *fields) {
-				f.barlineType = barline.Regular
+				f.barlineType = barline.Type_Regular
 				f.want = Regular
 			},
 		},
 		{
 			name: "Heavy",
 			prepare: func(f *fields) {
-				f.barlineType = barline.Heavy
+				f.barlineType = barline.Type_Heavy
 				f.want = Heavy
 			},
 		},
 		{
 			name: "HeavyHeavy",
 			prepare: func(f *fields) {
-				f.barlineType = barline.HeavyHeavy
+				f.barlineType = barline.Type_HeavyHeavy
 				f.want = HeavyHeavy
 			},
 		},
 		{
 			name: "LightHeavy",
 			prepare: func(f *fields) {
-				f.barlineType = barline.LightHeavy
+				f.barlineType = barline.Type_LightHeavy
 				f.want = LightHeavy
 			},
 		},
 		{
 			name: "HeavyLight",
 			prepare: func(f *fields) {
-				f.barlineType = barline.HeavyLight
+				f.barlineType = barline.Type_HeavyLight
 				f.want = HeavyLight
 			},
 		},

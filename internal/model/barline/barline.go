@@ -15,21 +15,28 @@ type Barline struct {
 }
 
 func FromMusicModel(muMoBar *barline.Barline, loc Location) Barline {
+	style := convertBarlineType(muMoBar.Type)
+
 	barL := Barline{
 		XMLName: xml.Name{
 			Local: "barline",
 		},
 		Location: loc.String(),
-		Style:    NewBarStyle(convertBarlineType(muMoBar.Type)),
 	}
 
 	if muMoBar.Time == barline.Time_Repeat {
+		// A repeat is drawn as a thick-thin pair with the thick line on the
+		// outside of the repeated section.
 		dir := Forward
+		style = HeavyLight
 		if loc == Right {
 			dir = Backward
+			style = LightHeavy
 		}
 		barL.Repeat = NewRepeat(dir)
 	}
+
+	barL.Style = NewBarStyle(style)
 
 	return barL
 }

@@ -1,10 +1,11 @@
 package model
 
 import (
-	"banduslib/internal/musicxml/model/fermata"
-	"banduslib/internal/musicxml/model/tied"
-	"banduslib/internal/musicxml/model/tuplet"
 	"encoding/xml"
+
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/model/fermata"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/model/tied"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/model/tuplet"
 )
 
 type Notations struct {

@@ -1,36 +1,45 @@
 package expander
 
 import (
-	c "banduslib/internal/common"
-	"banduslib/internal/common/music_model"
-	"banduslib/internal/interfaces"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/pitch"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/interfaces"
 )
 
 type taorExpand struct {
 }
 
-func (t *taorExpand) ExpandSymbol(symbol *music_model.Symbol, prevSymPitch c.Pitch) {
+func (t *taorExpand) ExpandSymbol(
+	symbol *symbols.Symbol,
+	prevSymPitch pitch.Pitch,
+) []pitch.Pitch {
 	if symbol == nil || symbol.Note == nil || symbol.Note.Embellishment == nil {
-		return
+		return nil
 	}
 
 	emb := symbol.Note.Embellishment
 
 	// regular taorluath
-	var expanded []c.Pitch
-	isHalf := prevSymPitch == c.LowG
-	isB := emb.Pitch == c.B
+	var expanded []pitch.Pitch
+	isHalf := prevSymPitch == pitch.Pitch_LowG
+	isB := emb.Pitch == pitch.Pitch_B
 	if isHalf {
-		expanded = []c.Pitch{c.D, c.LowG, c.E}
+		expanded = []pitch.Pitch{
+			pitch.Pitch_D, pitch.Pitch_LowG, pitch.Pitch_E,
+		}
 	}
 	if isB {
-		expanded = []c.Pitch{c.LowG, c.B, c.LowG, c.E}
+		expanded = []pitch.Pitch{
+			pitch.Pitch_LowG, pitch.Pitch_B, pitch.Pitch_LowG, pitch.Pitch_E,
+		}
 	}
 	if expanded == nil {
-		expanded = []c.Pitch{c.LowG, c.D, c.LowG, c.E}
+		expanded = []pitch.Pitch{
+			pitch.Pitch_LowG, pitch.Pitch_D, pitch.Pitch_LowG, pitch.Pitch_E,
+		}
 	}
-	symbol.Note.ExpandedEmbellishment = expanded
 
+	return expanded
 }
 
 func NewTaorluathsExpander() interfaces.SymbolExpander {

@@ -1,8 +1,9 @@
 package model
 
 import (
-	"banduslib/internal/musicxml/model/barline"
 	"encoding/xml"
+
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/model/barline"
 )
 
 type Measure struct {

@@ -9,13 +9,17 @@ import (
 type singleGraceExpander struct {
 }
 
-func (s *singleGraceExpander) ExpandSymbol(symbol *symbols.Symbol, _ pitch.Pitch) {
+func (s *singleGraceExpander) ExpandSymbol(
+	symbol *symbols.Symbol,
+	_ pitch.Pitch,
+) []pitch.Pitch {
 	if symbol == nil || symbol.Note == nil || symbol.Note.Embellishment == nil {
-		return
+		return nil
 	}
 
 	emb := symbol.Note.Embellishment
-	symbol.Note.ExpandedEmbellishment = []pitch.Pitch{
+
+	return []pitch.Pitch{
 		emb.Pitch,
 	}
 }

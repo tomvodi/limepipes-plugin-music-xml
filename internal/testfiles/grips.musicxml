@@ -148,8 +148,8 @@
        <note>
          <grace/>
          <pitch>
-           <step>B</step>
-           <octave>4</octave>
+           <step>D</step>
+           <octave>5</octave>
          </pitch>
          <voice>1</voice>
          <type>32nd</type>
@@ -528,8 +528,8 @@
        <note>
          <grace/>
          <pitch>
-           <step>B</step>
-           <octave>4</octave>
+           <step>D</step>
+           <octave>5</octave>
          </pitch>
          <voice>1</voice>
          <type>32nd</type>
@@ -1060,8 +1060,8 @@
        <note>
          <grace/>
          <pitch>
-           <step>B</step>
-           <octave>4</octave>
+           <step>D</step>
+           <octave>5</octave>
          </pitch>
          <voice>1</voice>
          <type>32nd</type>
@@ -1603,8 +1603,8 @@
        <note>
          <grace/>
          <pitch>
-           <step>B</step>
-           <octave>4</octave>
+           <step>D</step>
+           <octave>5</octave>
          </pitch>
          <voice>1</voice>
          <type>32nd</type>

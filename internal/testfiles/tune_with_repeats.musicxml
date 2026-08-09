@@ -19,10 +19,6 @@
    </part-list>
    <part id="P1">
      <measure number="1">
-       <barline location="left">
-         <bar-style>heavy-light</bar-style>
-         <repeat direction="forward"/>
-       </barline>
        <attributes>
          <divisions>32</divisions>
          <key>
@@ -33,6 +29,12 @@
            <beat-type>4</beat-type>
          </time>
        </attributes>
+     </measure>
+     <measure number="2">
+       <barline location="left">
+         <bar-style>heavy-light</bar-style>
+         <repeat direction="forward"/>
+       </barline>
        <note>
          <pitch>
            <step>A</step>
@@ -44,7 +46,7 @@
          <stem>down</stem>
        </note>
      </measure>
-     <measure number="2">
+     <measure number="3">
        <note>
          <pitch>
            <step>C</step>
@@ -57,7 +59,7 @@
          <stem>down</stem>
        </note>
      </measure>
-     <measure number="3">
+     <measure number="4">
        <barline location="right">
          <bar-style>light-heavy</bar-style>
          <repeat direction="backward"/>
@@ -73,7 +75,7 @@
          <stem>down</stem>
        </note>
      </measure>
-     <measure number="4">
+     <measure number="5">
        <barline location="left">
          <bar-style>heavy</bar-style>
        </barline>
@@ -88,7 +90,7 @@
          <stem>down</stem>
        </note>
      </measure>
-     <measure number="5">
+     <measure number="6">
        <barline location="right">
          <bar-style>heavy</bar-style>
        </barline>

@@ -6,8 +6,32 @@ import (
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/interfaces"
 )
 
-type ExpandTable map[emb.Embellishment]interfaces.SymbolExpander
+// embKey identifies an embellishment for the expander lookup.
+// The generated emb.Embellishment message can't be used as a map key itself
+// because the embedded protobuf message state makes it non comparable.
+type embKey struct {
+	Type    emb.Type
+	Pitch   pitch.Pitch
+	Variant emb.Variant
+	Weight  emb.Weight
+}
 
+func keyFromEmbellishment(e *emb.Embellishment) embKey {
+	if e == nil {
+		return embKey{}
+	}
+
+	return embKey{
+		Type:    e.Type,
+		Pitch:   e.Pitch,
+		Variant: e.Variant,
+		Weight:  e.Weight,
+	}
+}
+
+type ExpandTable map[embKey]interfaces.SymbolExpander
+
+//nolint:funlen // the table is a flat enumeration of all supported embellishments
 func newSymbolExpanderTable() ExpandTable {
 	singleGraceExp := NewSingleGraceExpander()
 	dblExpander := NewDoublingsExpander()
@@ -21,279 +45,148 @@ func newSymbolExpanderTable() ExpandTable {
 	tripleStrikesExpander := NewTripleStrikesExpander()
 	dblGraceExpander := NewDoubleGraceExpander()
 
-	return map[emb.Type]interfaces.SymbolExpander{
-		emb.Embellishment{
-			Type:  emb.Type_SingleGrace,
-			Pitch: pitch.Pitch_LowA,
-		}: singleGraceExp,
-		emb.Embellishment{
-			Type:  emb.SingleGrace,
-			Pitch: common.B,
-		}: singleGraceExp,
-		emb.Embellishment{
-			Type:  emb.SingleGrace,
-			Pitch: common.C,
-		}: singleGraceExp,
-		emb.Embellishment{
-			Type:  emb.SingleGrace,
-			Pitch: common.D,
-		}: singleGraceExp,
-		emb.Embellishment{
-			Type:  emb.SingleGrace,
-			Pitch: common.E,
-		}: singleGraceExp,
-		emb.Embellishment{
-			Type:  emb.SingleGrace,
-			Pitch: common.F,
-		}: singleGraceExp,
-		emb.Embellishment{
-			Type:  emb.SingleGrace,
-			Pitch: common.HighG,
-		}: singleGraceExp,
-		emb.Embellishment{
-			Type:  emb.SingleGrace,
-			Pitch: common.HighA,
-		}: singleGraceExp,
-		emb.Embellishment{
-			Type: emb.Doubling,
-		}: dblExpander,
-		emb.Embellishment{
-			Type:    emb.Doubling,
-			Variant: emb.Thumb,
-		}: dblExpander,
-		emb.Embellishment{
-			Type:    emb.Doubling,
-			Variant: emb.Half,
-		}: dblExpander,
-		emb.Embellishment{
-			Type:  emb.Strike,
-			Pitch: common.LowG,
+	return ExpandTable{
+		{Type: emb.Type_SingleGrace, Pitch: pitch.Pitch_LowA}:  singleGraceExp,
+		{Type: emb.Type_SingleGrace, Pitch: pitch.Pitch_B}:     singleGraceExp,
+		{Type: emb.Type_SingleGrace, Pitch: pitch.Pitch_C}:     singleGraceExp,
+		{Type: emb.Type_SingleGrace, Pitch: pitch.Pitch_D}:     singleGraceExp,
+		{Type: emb.Type_SingleGrace, Pitch: pitch.Pitch_E}:     singleGraceExp,
+		{Type: emb.Type_SingleGrace, Pitch: pitch.Pitch_F}:     singleGraceExp,
+		{Type: emb.Type_SingleGrace, Pitch: pitch.Pitch_HighG}: singleGraceExp,
+		{Type: emb.Type_SingleGrace, Pitch: pitch.Pitch_HighA}: singleGraceExp,
+
+		{Type: emb.Type_Doubling}:                             dblExpander,
+		{Type: emb.Type_Doubling, Variant: emb.Variant_Thumb}: dblExpander,
+		{Type: emb.Type_Doubling, Variant: emb.Variant_Half}:  dblExpander,
+
+		// A single strike carries no pitch: it always strikes the note below
+		// the melody note.
+		{Type: emb.Type_Strike}:                           strikesExpander,
+		{Type: emb.Type_Strike, Pitch: pitch.Pitch_LowG}:  strikesExpander,
+		{Type: emb.Type_Strike, Pitch: pitch.Pitch_LowA}:  strikesExpander,
+		{Type: emb.Type_Strike, Pitch: pitch.Pitch_B}:     strikesExpander,
+		{Type: emb.Type_Strike, Pitch: pitch.Pitch_C}:     strikesExpander,
+		{Type: emb.Type_Strike, Pitch: pitch.Pitch_D}:     strikesExpander,
+		{Type: emb.Type_Strike, Pitch: pitch.Pitch_E}:     strikesExpander,
+		{Type: emb.Type_Strike, Pitch: pitch.Pitch_F}:     strikesExpander,
+		{Type: emb.Type_Strike, Pitch: pitch.Pitch_HighG}: strikesExpander,
+		{Type: emb.Type_Strike, Variant: emb.Variant_G}:   strikesExpander,
+		{
+			Type:    emb.Type_Strike,
+			Variant: emb.Variant_G,
+			Weight:  emb.Weight_Light,
 		}: strikesExpander,
-		emb.Embellishment{
-			Type:  emb.Strike,
-			Pitch: common.LowA,
+		{Type: emb.Type_Strike, Variant: emb.Variant_Thumb}: strikesExpander,
+		{
+			Type:    emb.Type_Strike,
+			Variant: emb.Variant_Thumb,
+			Weight:  emb.Weight_Light,
 		}: strikesExpander,
-		emb.Embellishment{
-			Type:  emb.Strike,
-			Pitch: common.B,
+		{Type: emb.Type_Strike, Variant: emb.Variant_Half}: strikesExpander,
+		{
+			Type:    emb.Type_Strike,
+			Variant: emb.Variant_Half,
+			Weight:  emb.Weight_Light,
 		}: strikesExpander,
-		emb.Embellishment{
-			Type:  emb.Strike,
-			Pitch: common.C,
-		}: strikesExpander,
-		emb.Embellishment{
-			Type:  emb.Strike,
-			Pitch: common.D,
-		}: strikesExpander,
-		emb.Embellishment{
-			Type:  emb.Strike,
-			Pitch: common.E,
-		}: strikesExpander,
-		emb.Embellishment{
-			Type:  emb.Strike,
-			Pitch: common.F,
-		}: strikesExpander,
-		emb.Embellishment{
-			Type:  emb.Strike,
-			Pitch: common.HighG,
-		}: strikesExpander,
-		emb.Embellishment{
-			Type:    emb.Strike,
-			Variant: emb.G,
-		}: strikesExpander,
-		emb.Embellishment{
-			Type:    emb.Strike,
-			Variant: emb.G,
-			Weight:  emb.Light,
-		}: strikesExpander,
-		emb.Embellishment{
-			Type:    emb.Strike,
-			Variant: emb.Thumb,
-		}: strikesExpander,
-		emb.Embellishment{
-			Type:    emb.Strike,
-			Variant: emb.Thumb,
-			Weight:  emb.Light,
-		}: strikesExpander,
-		emb.Embellishment{
-			Type:    emb.Strike,
-			Variant: emb.Half,
-		}: strikesExpander,
-		emb.Embellishment{
-			Type: emb.Grip,
+
+		{Type: emb.Type_Grip}:                         gripsExpander,
+		{Type: emb.Type_Grip, Pitch: pitch.Pitch_B}:   gripsExpander,
+		{Type: emb.Type_Grip, Variant: emb.Variant_G}: gripsExpander,
+		{
+			Type:    emb.Type_Grip,
+			Variant: emb.Variant_G,
+			Pitch:   pitch.Pitch_B,
 		}: gripsExpander,
-		emb.Embellishment{
-			Type:  emb.Grip,
-			Pitch: common.B,
+		{Type: emb.Type_Grip, Variant: emb.Variant_Thumb}: gripsExpander,
+		{
+			Type:    emb.Type_Grip,
+			Variant: emb.Variant_Thumb,
+			Pitch:   pitch.Pitch_B,
 		}: gripsExpander,
-		emb.Embellishment{
-			Type:    emb.Grip,
-			Variant: emb.G,
+		{Type: emb.Type_Grip, Variant: emb.Variant_Half}: gripsExpander,
+		{
+			Type:    emb.Type_Grip,
+			Variant: emb.Variant_Half,
+			Pitch:   pitch.Pitch_B,
 		}: gripsExpander,
-		emb.Embellishment{
-			Type:    emb.Grip,
-			Variant: emb.G,
-			Pitch:   common.B,
-		}: gripsExpander,
-		emb.Embellishment{
-			Type:    emb.Grip,
-			Variant: emb.Thumb,
-		}: gripsExpander,
-		emb.Embellishment{
-			Type:    emb.Grip,
-			Variant: emb.Thumb,
-			Pitch:   common.B,
-		}: gripsExpander,
-		emb.Embellishment{
-			Type:    emb.Grip,
-			Variant: emb.Half,
-		}: gripsExpander,
-		emb.Embellishment{
-			Type:    emb.Grip,
-			Variant: emb.Half,
-			Pitch:   common.B,
-		}: gripsExpander,
-		emb.Embellishment{
-			Type: emb.Taorluath,
-		}: taorExpander,
-		emb.Embellishment{
-			Type:  emb.Taorluath,
-			Pitch: common.B,
-		}: taorExpander,
-		emb.Embellishment{
-			Type: emb.Bubbly,
-		}: NewBubblysExpander(),
-		emb.Embellishment{
-			Type: emb.Birl,
-		}: birlsExpander,
-		emb.Embellishment{
-			Type:    emb.Birl,
-			Variant: emb.G,
-		}: birlsExpander,
-		emb.Embellishment{
-			Type:    emb.Birl,
-			Variant: emb.Thumb,
-		}: birlsExpander,
-		emb.Embellishment{
-			Type:   emb.ThrowD,
-			Weight: emb.Light,
-		}: throwdExpander,
-		emb.Embellishment{
-			Type:   emb.ThrowD,
-			Weight: emb.Heavy,
-		}: throwdExpander,
-		emb.Embellishment{
-			Type: emb.Pele,
+
+		{Type: emb.Type_Taorluath}:                       taorExpander,
+		{Type: emb.Type_Taorluath, Pitch: pitch.Pitch_B}: taorExpander,
+
+		{Type: emb.Type_Bubbly}: NewBubblysExpander(),
+
+		{Type: emb.Type_Birl}:                             birlsExpander,
+		{Type: emb.Type_Birl, Variant: emb.Variant_G}:     birlsExpander,
+		{Type: emb.Type_Birl, Variant: emb.Variant_Thumb}: birlsExpander,
+		{Type: emb.Type_ABirl}:                            birlsExpander,
+		{Type: emb.Type_GraceBirl}:                        birlsExpander,
+
+		// An unweighted throw on D is the heavy one.
+		{Type: emb.Type_ThrowD}:                           throwdExpander,
+		{Type: emb.Type_ThrowD, Weight: emb.Weight_Light}: throwdExpander,
+		{Type: emb.Type_ThrowD, Weight: emb.Weight_Heavy}: throwdExpander,
+
+		{Type: emb.Type_Pele}:                             pelesExpander,
+		{Type: emb.Type_Pele, Weight: emb.Weight_Light}:   pelesExpander,
+		{Type: emb.Type_Pele, Variant: emb.Variant_Thumb}: pelesExpander,
+		{
+			Type:    emb.Type_Pele,
+			Variant: emb.Variant_Thumb,
+			Weight:  emb.Weight_Light,
 		}: pelesExpander,
-		emb.Embellishment{
-			Type:   emb.Pele,
-			Weight: emb.Light,
+		{Type: emb.Type_Pele, Variant: emb.Variant_Half}: pelesExpander,
+		{
+			Type:    emb.Type_Pele,
+			Variant: emb.Variant_Half,
+			Weight:  emb.Weight_Light,
 		}: pelesExpander,
-		emb.Embellishment{
-			Type:    emb.Pele,
-			Variant: emb.Thumb,
-		}: pelesExpander,
-		emb.Embellishment{
-			Type:    emb.Pele,
-			Variant: emb.Thumb,
-			Weight:  emb.Light,
-		}: pelesExpander,
-		emb.Embellishment{
-			Type:    emb.Pele,
-			Variant: emb.Half,
-		}: pelesExpander,
-		emb.Embellishment{
-			Type:    emb.Pele,
-			Variant: emb.Half,
-			Weight:  emb.Light,
-		}: pelesExpander,
-		emb.Embellishment{
-			Type: emb.DoubleStrike,
+
+		{Type: emb.Type_DoubleStrike}:                           doubleStrikesExpander,
+		{Type: emb.Type_DoubleStrike, Weight: emb.Weight_Light}: doubleStrikesExpander,
+		{Type: emb.Type_DoubleStrike, Variant: emb.Variant_G}:   doubleStrikesExpander,
+		{
+			Type:    emb.Type_DoubleStrike,
+			Variant: emb.Variant_G,
+			Weight:  emb.Weight_Light,
 		}: doubleStrikesExpander,
-		emb.Embellishment{
-			Type:   emb.DoubleStrike,
-			Weight: emb.Light,
+		{Type: emb.Type_DoubleStrike, Variant: emb.Variant_Thumb}: doubleStrikesExpander,
+		{
+			Type:    emb.Type_DoubleStrike,
+			Variant: emb.Variant_Thumb,
+			Weight:  emb.Weight_Light,
 		}: doubleStrikesExpander,
-		emb.Embellishment{
-			Type:    emb.DoubleStrike,
-			Variant: emb.G,
+		{Type: emb.Type_DoubleStrike, Variant: emb.Variant_Half}: doubleStrikesExpander,
+		{
+			Type:    emb.Type_DoubleStrike,
+			Variant: emb.Variant_Half,
+			Weight:  emb.Weight_Light,
 		}: doubleStrikesExpander,
-		emb.Embellishment{
-			Type:    emb.DoubleStrike,
-			Variant: emb.G,
-			Weight:  emb.Light,
-		}: doubleStrikesExpander,
-		emb.Embellishment{
-			Type:    emb.DoubleStrike,
-			Variant: emb.Thumb,
-		}: doubleStrikesExpander,
-		emb.Embellishment{
-			Type:    emb.DoubleStrike,
-			Variant: emb.Thumb,
-			Weight:  emb.Light,
-		}: doubleStrikesExpander,
-		emb.Embellishment{
-			Type:    emb.DoubleStrike,
-			Variant: emb.Half,
-		}: doubleStrikesExpander,
-		emb.Embellishment{
-			Type:    emb.DoubleStrike,
-			Variant: emb.Half,
-			Weight:  emb.Light,
-		}: doubleStrikesExpander,
-		emb.Embellishment{
-			Type: emb.TripleStrike,
+
+		{Type: emb.Type_TripleStrike}:                           tripleStrikesExpander,
+		{Type: emb.Type_TripleStrike, Weight: emb.Weight_Light}: tripleStrikesExpander,
+		{Type: emb.Type_TripleStrike, Variant: emb.Variant_G}:   tripleStrikesExpander,
+		{
+			Type:    emb.Type_TripleStrike,
+			Variant: emb.Variant_G,
+			Weight:  emb.Weight_Light,
 		}: tripleStrikesExpander,
-		emb.Embellishment{
-			Type:   emb.TripleStrike,
-			Weight: emb.Light,
+		{Type: emb.Type_TripleStrike, Variant: emb.Variant_Thumb}: tripleStrikesExpander,
+		{
+			Type:    emb.Type_TripleStrike,
+			Variant: emb.Variant_Thumb,
+			Weight:  emb.Weight_Light,
 		}: tripleStrikesExpander,
-		emb.Embellishment{
-			Type:    emb.TripleStrike,
-			Variant: emb.G,
+		{Type: emb.Type_TripleStrike, Variant: emb.Variant_Half}: tripleStrikesExpander,
+		{
+			Type:    emb.Type_TripleStrike,
+			Variant: emb.Variant_Half,
+			Weight:  emb.Weight_Light,
 		}: tripleStrikesExpander,
-		emb.Embellishment{
-			Type:    emb.TripleStrike,
-			Variant: emb.G,
-			Weight:  emb.Light,
-		}: tripleStrikesExpander,
-		emb.Embellishment{
-			Type:    emb.TripleStrike,
-			Variant: emb.Thumb,
-		}: tripleStrikesExpander,
-		emb.Embellishment{
-			Type:    emb.TripleStrike,
-			Variant: emb.Thumb,
-			Weight:  emb.Light,
-		}: tripleStrikesExpander,
-		emb.Embellishment{
-			Type:    emb.TripleStrike,
-			Variant: emb.Half,
-		}: tripleStrikesExpander,
-		emb.Embellishment{
-			Type:    emb.TripleStrike,
-			Variant: emb.Half,
-			Weight:  emb.Light,
-		}: tripleStrikesExpander,
-		emb.Embellishment{
-			Type:  emb.DoubleGrace,
-			Pitch: common.D,
-		}: dblGraceExpander,
-		emb.Embellishment{
-			Type:  emb.DoubleGrace,
-			Pitch: common.E,
-		}: dblGraceExpander,
-		emb.Embellishment{
-			Type:  emb.DoubleGrace,
-			Pitch: common.F,
-		}: dblGraceExpander,
-		emb.Embellishment{
-			Type:  emb.DoubleGrace,
-			Pitch: common.HighG,
-		}: dblGraceExpander,
-		emb.Embellishment{
-			Type:  emb.DoubleGrace,
-			Pitch: common.HighA,
-		}: dblGraceExpander,
+
+		{Type: emb.Type_DoubleGrace, Pitch: pitch.Pitch_D}:     dblGraceExpander,
+		{Type: emb.Type_DoubleGrace, Pitch: pitch.Pitch_E}:     dblGraceExpander,
+		{Type: emb.Type_DoubleGrace, Pitch: pitch.Pitch_F}:     dblGraceExpander,
+		{Type: emb.Type_DoubleGrace, Pitch: pitch.Pitch_HighG}: dblGraceExpander,
+		{Type: emb.Type_DoubleGrace, Pitch: pitch.Pitch_HighA}: dblGraceExpander,
 	}
 }

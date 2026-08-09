@@ -3,11 +3,16 @@ package musicxml
 import (
 	"bytes"
 	"encoding/xml"
+	"io"
+
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/boundary"
 	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/measure"
+	mmtuplet "github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols/tuplet"
 	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/tune"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/interfaces"
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/model"
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/model/barline"
-	"io"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/model/tuplet"
 )
 
 func WriteScore(score *model.Score, writer io.Writer) error {
@@ -43,10 +48,24 @@ func ReadScore(reader io.Reader) (*model.Score, error) {
 	return score, nil
 }
 
-func ScoreFromMusicModelTune(tune *tune.Tune) (*model.Score, error) {
+// ScoreFromMusicModelTune converts a music model tune into a MusicXML score.
+// exps holds the grace note pitches each embellishment expands to, as returned
+// by an interfaces.EmbellishmentExpander. It may be nil, in which case
+// embellishments are left out of the score.
+func ScoreFromMusicModelTune(
+	tune *tune.Tune,
+	exps interfaces.Expansions,
+) (*model.Score, error) {
 	var measures []model.Measure
-	for i, measure := range tune.Measures {
-		xmlMeasure := xmlMeasureFromMusicModelMeasure(measure, i, 32)
+	for _, measure := range tune.Measures {
+		// A staff can start without carrying anything of its own. Such a
+		// measure has no MusicXML equivalent and would only shift the
+		// numbering of the ones that follow.
+		if isEmptyMeasure(measure) {
+			continue
+		}
+
+		xmlMeasure := xmlMeasureFromMusicModelMeasure(measure, exps, len(measures), 32)
 		measures = append(measures, xmlMeasure)
 	}
 
@@ -105,7 +124,21 @@ func ScoreFromMusicModelTune(tune *tune.Tune) (*model.Score, error) {
 	return score, nil
 }
 
-func xmlMeasureFromMusicModelMeasure(measure *measure.Measure, idx int, divisions uint8) model.Measure {
+// isEmptyMeasure reports whether a measure carries nothing at all: no barlines,
+// no time signature and no symbols.
+func isEmptyMeasure(m *measure.Measure) bool {
+	return m.LeftBarline == nil &&
+		m.RightBarline == nil &&
+		m.Time == nil &&
+		len(m.Symbols) == 0
+}
+
+func xmlMeasureFromMusicModelMeasure(
+	measure *measure.Measure,
+	exps interfaces.Expansions,
+	idx int,
+	divisions uint8,
+) model.Measure {
 	xmlMeasure := model.Measure{
 		XMLName: xml.Name{
 			Local: "measure",
@@ -134,9 +167,42 @@ func xmlMeasureFromMusicModelMeasure(measure *measure.Measure, idx int, division
 	}
 	var measureNotes []model.Note
 	noteCtx := &model.NoteContext{}
+
+	// A tuplet is its own symbol bracketing a run of notes. Every note inside
+	// the bracket carries a time-modification, and the first and last one also
+	// carry the tuplet start/stop notation.
+	var pendingTupletStart *mmtuplet.Tuplet
+
 	for _, symbol := range measure.Symbols {
+		if symbol.Tuplet != nil {
+			switch symbol.Tuplet.BoundaryType {
+			case boundary.Boundary_Start:
+				noteCtx.CurrentTuplet = symbol.Tuplet
+				pendingTupletStart = symbol.Tuplet
+			case boundary.Boundary_End:
+				if len(measureNotes) > 0 {
+					last := &measureNotes[len(measureNotes)-1]
+					last.SetTuplet(tuplet.FromMusicModel(symbol.Tuplet))
+				}
+				noteCtx.CurrentTuplet = nil
+			}
+
+			continue
+		}
+
 		if symbol.IsNote() {
-			symbolNotes := model.NotesFromMusicModel(symbol.Note, noteCtx, divisions)
+			symbolNotes := model.NotesFromMusicModel(
+				symbol,
+				exps.Get(symbol.Note),
+				noteCtx,
+				divisions,
+			)
+			if pendingTupletStart != nil && len(symbolNotes) > 0 {
+				// the melody note is the last one, graces come before it
+				melody := &symbolNotes[len(symbolNotes)-1]
+				melody.SetTuplet(tuplet.FromMusicModel(pendingTupletStart))
+				pendingTupletStart = nil
+			}
 			measureNotes = append(measureNotes, symbolNotes...)
 		}
 		if symbol.Rest != nil {

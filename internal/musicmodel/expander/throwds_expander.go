@@ -1,37 +1,43 @@
 package expander
 
 import (
-	c "banduslib/internal/common"
-	"banduslib/internal/common/music_model"
-	"banduslib/internal/common/music_model/symbols/embellishment"
-	"banduslib/internal/interfaces"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/pitch"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols/embellishment"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/interfaces"
 )
 
 type throwdExpand struct {
 }
 
-func (t *throwdExpand) ExpandSymbol(symbol *music_model.Symbol, prevSymPitch c.Pitch) {
+func (t *throwdExpand) ExpandSymbol(
+	symbol *symbols.Symbol,
+	prevSymPitch pitch.Pitch,
+) []pitch.Pitch {
 	if symbol == nil || symbol.Note == nil || symbol.Note.Embellishment == nil {
-		return
+		return nil
 	}
 
 	emb := symbol.Note.Embellishment
 
-	var expanded []c.Pitch
-	if emb.Weight == embellishment.Light {
-		expanded = []c.Pitch{c.LowG, c.D, c.C}
-	}
-	if emb.Weight == embellishment.Heavy {
-		expanded = []c.Pitch{c.LowG, c.D, c.LowG, c.C}
+	// A light throw is marked as such; anything else is a heavy throw.
+	var expanded []pitch.Pitch
+	if emb.Weight == embellishment.Weight_Light {
+		expanded = []pitch.Pitch{
+			pitch.Pitch_LowG, pitch.Pitch_D, pitch.Pitch_C,
+		}
+	} else {
+		expanded = []pitch.Pitch{
+			pitch.Pitch_LowG, pitch.Pitch_D, pitch.Pitch_LowG, pitch.Pitch_C,
+		}
 	}
 
-	isHalf := prevSymPitch == c.LowG
-	if isHalf {
+	isHalf := prevSymPitch == pitch.Pitch_LowG
+	if isHalf && len(expanded) > 0 {
 		expanded = expanded[1:]
 	}
 
-	symbol.Note.ExpandedEmbellishment = expanded
-
+	return expanded
 }
 
 func NewThrowdsExpander() interfaces.SymbolExpander {

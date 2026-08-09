@@ -2,11 +2,14 @@ package model
 
 import (
 	"encoding/xml"
+
 	"github.com/rs/zerolog/log"
 	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/length"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/pitch"
 	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols"
 	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols/accidental"
 	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols/tie"
+	mmtuplet "github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols/tuplet"
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/model/fermata"
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/model/tied"
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/model/tuplet"
@@ -16,7 +19,7 @@ var stemUp = "up"
 var stemDown = "down"
 
 type NoteContext struct {
-	CurrentTuplet *tuplet.Tuplet
+	CurrentTuplet *mmtuplet.Tuplet
 }
 
 type Note struct {
@@ -35,28 +38,35 @@ type Note struct {
 	Notations        *Notations        `xml:"notations,omitempty"`
 }
 
+// NotesFromMusicModel converts a music model symbol into the MusicXML notes it
+// consists of. An embellishment becomes a leading run of grace notes, so
+// expanded carries the pitches the symbol's embellishment expands to. It comes
+// in as a parameter because the music model has no field for it.
 func NotesFromMusicModel(
-	n *symbols.Note,
+	sym *symbols.Symbol,
+	expanded []pitch.Pitch,
 	noteCtx *NoteContext,
 	divisions uint8,
 ) []Note {
 	var notes []Note
 
-	if n.Embellishment != nil && n.ExpandedEmbellishment != nil {
+	n := sym.Note
 
-		for i, pitch := range n.ExpandedEmbellishment {
+	if n.Embellishment != nil && expanded != nil {
+
+		for i, gracePitch := range expanded {
 			grace := Note{
 				XMLName: xml.Name{
-					Local: "n",
+					Local: "note",
 				},
 				Grace: NewGrace(),
-				Pitch: PitchFromMusicModel(pitch, accidental.Accidental_NoAccidental),
+				Pitch: PitchFromMusicModel(gracePitch, accidental.Accidental_NoAccidental),
 				Voice: 1,
 				Type:  typeFromLength(length.Length_Thirtysecond),
 				Stem:  &stemUp,
 			}
-			if len(n.ExpandedEmbellishment) > 1 {
-				grace.Beams = embellishmentBeamsForPosition(i, len(n.ExpandedEmbellishment))
+			if len(expanded) > 1 {
+				grace.Beams = embellishmentBeamsForPosition(i, len(expanded))
 			}
 			notes = append(notes, grace)
 		}
@@ -64,7 +74,7 @@ func NotesFromMusicModel(
 
 	xmlNote := Note{
 		XMLName: xml.Name{
-			Local: "n",
+			Local: "note",
 		},
 		Pitch:      PitchFromMusicModel(n.Pitch, n.Accidental),
 		Duration:   durationFromLength(n.Length, divisions),
@@ -78,14 +88,11 @@ func NotesFromMusicModel(
 			xmlNote.Dots = append(xmlNote.Dots, NewDot())
 		}
 	}
-	if n.Tuplet != nil {
-		xmlNote.TimeModification = NewTimeModification(n.Tuplet)
-	}
 	if noteCtx.CurrentTuplet != nil {
 		xmlNote.TimeModification = NewTimeModification(noteCtx.CurrentTuplet)
 	}
 	var notations *Notations
-	if n.Fermata || n.Tie != tie.Tie_NoTie || n.Tuplet != nil {
+	if n.Fermata || n.Tie != tie.Tie_NoTie {
 		notations = NewNotations()
 	}
 
@@ -100,15 +107,6 @@ func NotesFromMusicModel(
 			notations.Tied = tied.NewTied(tied.Stop)
 		}
 	}
-	if n.Tuplet != nil {
-		notations.Tuplet = tuplet.FromMusicModel(n.Tuplet)
-		if n.Tuplet.BoundaryType == tuplet.Start {
-			noteCtx.CurrentTuplet = n.Tuplet
-		}
-		if n.Tuplet.BoundaryType == tuplet.Stop {
-			noteCtx.CurrentTuplet = nil
-		}
-	}
 	if notations != nil {
 		xmlNote.Notations = notations
 	}
@@ -116,6 +114,19 @@ func NotesFromMusicModel(
 	notes = append(notes, xmlNote)
 
 	return notes
+}
+
+// SetTuplet attaches a tuplet notation to the note, creating the notations
+// element if the note doesn't have one yet.
+// In the music model a tuplet is a standalone symbol bracketing a run of notes,
+// so the boundary notations are attached by the caller walking the measure
+// rather than by the note conversion itself.
+func (n *Note) SetTuplet(tpl *tuplet.Tuplet) {
+	if n.Notations == nil {
+		n.Notations = NewNotations()
+	}
+
+	n.Notations.Tuplet = tpl
 }
 
 func RestFromMusicModel(rest *symbols.Rest, divisions uint8) Note {

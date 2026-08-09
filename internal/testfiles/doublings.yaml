@@ -1,0 +1,134 @@
+- title: Tune Title
+  measures:
+  - symbols:
+    - note:
+        pitch: LowG
+        length: Quarter
+        embellishment:
+          type: Doubling
+    - note:
+        pitch: LowA
+        length: Quarter
+        embellishment:
+          type: Doubling
+    - note:
+        pitch: B
+        length: Quarter
+        embellishment:
+          type: Doubling
+    - note:
+        pitch: C
+        length: Quarter
+        embellishment:
+          type: Doubling
+    - note:
+        pitch: D
+        length: Quarter
+        embellishment:
+          type: Doubling
+    - note:
+        pitch: E
+        length: Quarter
+        embellishment:
+          type: Doubling
+    - note:
+        pitch: F
+        length: Quarter
+        embellishment:
+          type: Doubling
+    - note:
+        pitch: HighG
+        length: Quarter
+        embellishment:
+          type: Doubling
+    - note:
+        pitch: HighA
+        length: Quarter
+        embellishment:
+          type: Doubling
+  - symbols:
+    - note:
+        pitch: LowG
+        length: Quarter
+        embellishment:
+          type: Doubling
+          variant: Thumb
+    - note:
+        pitch: LowA
+        length: Quarter
+        embellishment:
+          type: Doubling
+          variant: Thumb
+    - note:
+        pitch: B
+        length: Quarter
+        embellishment:
+          type: Doubling
+          variant: Thumb
+    - note:
+        pitch: C
+        length: Quarter
+        embellishment:
+          type: Doubling
+          variant: Thumb
+    - note:
+        pitch: D
+        length: Quarter
+        embellishment:
+          type: Doubling
+          variant: Thumb
+    - note:
+        pitch: E
+        length: Quarter
+        embellishment:
+          type: Doubling
+          variant: Thumb
+    - note:
+        pitch: F
+        length: Quarter
+        embellishment:
+          type: Doubling
+          variant: Thumb
+  - symbols:
+    - note:
+        pitch: LowG
+        length: Quarter
+        embellishment:
+          type: Doubling
+          variant: Half
+    - note:
+        pitch: LowA
+        length: Quarter
+        embellishment:
+          type: Doubling
+          variant: Half
+    - note:
+        pitch: B
+        length: Quarter
+        embellishment:
+          type: Doubling
+          variant: Half
+    - note:
+        pitch: C
+        length: Quarter
+        embellishment:
+          type: Doubling
+          variant: Half
+    - note:
+        pitch: D
+        length: Quarter
+        embellishment:
+          type: Doubling
+          variant: Half
+    - note:
+        pitch: E
+        length: Quarter
+        embellishment:
+          type: Doubling
+          variant: Half
+    - note:
+        pitch: F
+        length: Quarter
+        embellishment:
+          type: Doubling
+          variant: Half

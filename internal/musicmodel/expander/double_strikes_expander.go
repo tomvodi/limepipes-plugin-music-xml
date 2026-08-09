@@ -1,58 +1,72 @@
 package expander
 
 import (
-	c "banduslib/internal/common"
-	"banduslib/internal/common/music_model"
-	"banduslib/internal/common/music_model/symbols/embellishment"
-	"banduslib/internal/interfaces"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/pitch"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/symbols/embellishment"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/interfaces"
 )
 
 type dblStrikeExp struct {
 }
 
-func (d *dblStrikeExp) ExpandSymbol(symbol *music_model.Symbol, _ c.Pitch) {
+func (d *dblStrikeExp) ExpandSymbol(
+	symbol *symbols.Symbol,
+	_ pitch.Pitch,
+) []pitch.Pitch {
 	if symbol == nil || symbol.Note == nil || symbol.Note.Embellishment == nil {
-		return
+		return nil
 	}
 
 	emb := symbol.Note.Embellishment
 
-	isLight := emb.Weight == embellishment.Light
-	var basicDblStrike []c.Pitch
-	var symbolPitch = symbol.Note.Pitch
-	if symbolPitch >= c.LowA &&
-		symbolPitch <= c.D {
-		basicDblStrike = []c.Pitch{c.LowG, symbolPitch, c.LowG}
+	isLight := emb.Weight == embellishment.Weight_Light
+	var basicDblStrike []pitch.Pitch
+	symbolPitch := symbol.Note.Pitch
+	if symbolPitch >= pitch.Pitch_LowA &&
+		symbolPitch <= pitch.Pitch_D {
+		basicDblStrike = []pitch.Pitch{
+			pitch.Pitch_LowG, symbolPitch, pitch.Pitch_LowG,
+		}
 		if isLight {
-			basicDblStrike[0] = c.C
-			basicDblStrike[2] = c.C
+			basicDblStrike[0] = pitch.Pitch_C
+			basicDblStrike[2] = pitch.Pitch_C
 		}
 	}
-	if symbolPitch == c.E {
-		basicDblStrike = []c.Pitch{c.LowA, symbolPitch, c.LowA}
+	if symbolPitch == pitch.Pitch_E {
+		basicDblStrike = []pitch.Pitch{
+			pitch.Pitch_LowA, symbolPitch, pitch.Pitch_LowA,
+		}
 	}
-	if symbolPitch == c.F {
-		basicDblStrike = []c.Pitch{c.E, symbolPitch, c.E}
+	if symbolPitch == pitch.Pitch_F {
+		basicDblStrike = []pitch.Pitch{
+			pitch.Pitch_E, symbolPitch, pitch.Pitch_E,
+		}
 	}
-	if symbolPitch == c.HighG {
-		basicDblStrike = []c.Pitch{c.F, symbolPitch, c.F}
+	if symbolPitch == pitch.Pitch_HighG {
+		basicDblStrike = []pitch.Pitch{
+			pitch.Pitch_F, symbolPitch, pitch.Pitch_F,
+		}
 	}
-	if symbolPitch == c.HighA &&
-		(emb.Variant == embellishment.Half || emb.Variant == embellishment.NoVariant) {
-		basicDblStrike = []c.Pitch{c.HighG, symbolPitch, c.HighG}
+	if symbolPitch == pitch.Pitch_HighA &&
+		(emb.Variant == embellishment.Variant_Half ||
+			emb.Variant == embellishment.Variant_NoVariant) {
+		basicDblStrike = []pitch.Pitch{
+			pitch.Pitch_HighG, symbolPitch, pitch.Pitch_HighG,
+		}
 	}
-	if emb.Variant != embellishment.NoVariant {
-		basicDblStrike = append([]c.Pitch{symbolPitch}, basicDblStrike...)
+	if emb.Variant != embellishment.Variant_NoVariant {
+		basicDblStrike = append([]pitch.Pitch{symbolPitch}, basicDblStrike...)
 	}
 
-	if emb.Variant == embellishment.Thumb {
-		basicDblStrike = append([]c.Pitch{c.HighA}, basicDblStrike...)
+	if emb.Variant == embellishment.Variant_Thumb {
+		basicDblStrike = append([]pitch.Pitch{pitch.Pitch_HighA}, basicDblStrike...)
 	}
-	if emb.Variant == embellishment.G {
-		basicDblStrike = append([]c.Pitch{c.HighG}, basicDblStrike...)
+	if emb.Variant == embellishment.Variant_G {
+		basicDblStrike = append([]pitch.Pitch{pitch.Pitch_HighG}, basicDblStrike...)
 	}
 
-	symbol.Note.ExpandedEmbellishment = basicDblStrike
+	return basicDblStrike
 }
 
 func NewDoubleStrikesExpander() interfaces.SymbolExpander {
