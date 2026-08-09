@@ -7,11 +7,29 @@ import (
 	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/barline"
 )
 
+// Barline is one edge of a bar. Field order matters: MusicXML wants bar-style,
+// then ending, then repeat, and encoding/xml writes fields in the order they
+// are declared.
 type Barline struct {
-	XMLName  xml.Name `xml:"barline"`
-	Location string   `xml:"location,attr"`
-	Style    BarStyle `xml:"bar-style"`
-	Repeat   *Repeat  `xml:"repeat,omitempty"`
+	XMLName xml.Name `xml:"barline"`
+
+	Location string `xml:"location,attr"`
+
+	// Style is optional: a barline that exists only to carry an ending bracket
+	// does not draw a line of its own.
+	Style  *BarStyle `xml:"bar-style,omitempty"`
+	Ending *Ending   `xml:"ending,omitempty"`
+	Repeat *Repeat   `xml:"repeat,omitempty"`
+}
+
+// NewEndingBarline makes a barline whose only job is to carry an ending
+// bracket, for a bar that has no barline of its own there.
+func NewEndingBarline(loc Location, ending *Ending) Barline {
+	return Barline{
+		XMLName:  xml.Name{Local: "barline"},
+		Location: loc.String(),
+		Ending:   ending,
+	}
 }
 
 func FromMusicModel(muMoBar *barline.Barline, loc Location) Barline {

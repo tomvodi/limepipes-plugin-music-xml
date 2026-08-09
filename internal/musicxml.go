@@ -13,6 +13,7 @@ import (
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/model"
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/model/barline"
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/model/tuplet"
+	"github.com/tomvodi/limepipes-plugin-music-xml/internal/timelines"
 )
 
 func WriteScore(score *model.Score, writer io.Writer) error {
@@ -29,6 +30,7 @@ func WriteScore(score *model.Score, writer io.Writer) error {
 	data = bytes.ReplaceAll(data, []byte("></fermata>"), []byte("/>"))
 	data = bytes.ReplaceAll(data, []byte("></tied>"), []byte("/>"))
 	data = bytes.ReplaceAll(data, []byte("></tuplet>"), []byte("/>"))
+	data = bytes.ReplaceAll(data, []byte("></ending>"), []byte("/>"))
 	if _, err := writer.Write(data); err != nil {
 		return err
 	}
@@ -49,15 +51,24 @@ func ReadScore(reader io.Reader) (*model.Score, error) {
 }
 
 // ScoreFromMusicModelTune converts a music model tune into a MusicXML score.
-// exps holds the grace note pitches each embellishment expands to, as returned
-// by an interfaces.EmbellishmentExpander. It may be nil, in which case
-// embellishments are left out of the score.
+//
+// The expander is taken rather than a ready-made set of expansions because the
+// tune is rewritten before conversion: Normalize works on a copy, and the
+// expansions have to be keyed on the notes of that copy.
 func ScoreFromMusicModelTune(
-	tune *tune.Tune,
-	exps interfaces.Expansions,
+	t *tune.Tune,
+	expander interfaces.EmbellishmentExpander,
 ) (*model.Score, error) {
+	normalized := timelines.Normalize(t)
+	exps := expander.ExpandTune(normalized)
+
 	var measures []model.Measure
-	for _, measure := range tune.Measures {
+
+	// A bracket can run over several bars, so the ending that is open carries
+	// from one measure to the next.
+	var openEnding []int
+
+	for _, measure := range normalized.Measures {
 		// A staff can start without carrying anything of its own. Such a
 		// measure has no MusicXML equivalent and would only shift the
 		// numbering of the ones that follow.
@@ -66,6 +77,8 @@ func ScoreFromMusicModelTune(
 		}
 
 		xmlMeasure := xmlMeasureFromMusicModelMeasure(measure, exps, len(measures), 32)
+		openEnding = addEndings(&xmlMeasure, measure, openEnding)
+
 		measures = append(measures, xmlMeasure)
 	}
 
@@ -122,6 +135,38 @@ func ScoreFromMusicModelTune(
 	}
 
 	return score, nil
+}
+
+// addEndings hangs the first and second time brackets of a measure off its
+// barlines: the opening one on the left, the closing one on the right.
+//
+// openEnding is the bracket still open when the measure begins, and the
+// returned value is the one still open when it ends — a bracket may span
+// several bars, in which case only the first and last carry a marker.
+func addEndings(
+	xmlMeasure *model.Measure,
+	m *measure.Measure,
+	openEnding []int,
+) []int {
+	for _, sym := range m.Symbols {
+		switch {
+		case timelines.IsStart(sym):
+			times := timelines.EndingNumbers(sym.Timeline.Type)
+			if times == nil {
+				// not a first or second time, so nothing MusicXML can show
+				continue
+			}
+
+			xmlMeasure.SetEnding(barline.Left, barline.NewEnding(times, barline.Start))
+			openEnding = times
+
+		case timelines.IsEnd(sym) && openEnding != nil:
+			xmlMeasure.SetEnding(barline.Right, barline.NewEnding(openEnding, barline.Stop))
+			openEnding = nil
+		}
+	}
+
+	return openEnding
 }
 
 // isEmptyMeasure reports whether a measure carries nothing at all: no barlines,

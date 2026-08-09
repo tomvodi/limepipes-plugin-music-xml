@@ -35,6 +35,23 @@ func hasBoundary(sym *symbols.Symbol, b boundary.Boundary) bool {
 		sym.Timeline.BoundaryType == b
 }
 
+// EndingNumbers returns the times through a repeat a bracket is played on, for
+// writing as a MusicXML ending number. It returns nil for time lines that are
+// not first/second endings, which have no MusicXML equivalent and are dropped.
+//
+// Call it only after Normalize: a "second of N" reaching this point would mean
+// the bracket never found the part it belongs to.
+func EndingNumbers(t tl.Type) []int {
+	switch t {
+	case tl.Type_First, tl.Type_Singling:
+		return []int{1}
+	case tl.Type_Second, tl.Type_Doubling:
+		return []int{2}
+	default:
+		return nil
+	}
+}
+
 // playedInParts returns the parts a time line belongs to, numbered from 1.
 //
 // Only the "second of N" family names a part other than the one it is written

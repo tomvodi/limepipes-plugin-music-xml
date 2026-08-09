@@ -25,8 +25,8 @@ type BarStyle struct {
 	Value   string   `xml:",chardata"`
 }
 
-func NewBarStyle(style Style) BarStyle {
-	return BarStyle{
+func NewBarStyle(style Style) *BarStyle {
+	return &BarStyle{
 		XMLName: xml.Name{Local: "bar-style"},
 		Value:   style.String(),
 	}

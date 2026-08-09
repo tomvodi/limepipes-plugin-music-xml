@@ -75,10 +75,7 @@ func (p *plug) scoreFromTunes(tunes []*tune.Tune) (*model.Score, error) {
 		)
 	}
 
-	t := tunes[0]
-	exps := p.embExpander.ExpandTune(t)
-
-	return musicxml.ScoreFromMusicModelTune(t, exps)
+	return musicxml.ScoreFromMusicModelTune(tunes[0], p.embExpander)
 }
 
 func (p *plug) PluginInfo() (*messages.PluginInfoResponse, error) {
