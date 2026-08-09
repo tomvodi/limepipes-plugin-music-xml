@@ -12,10 +12,10 @@ import (
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/utils"
 )
 
-func regPele(pitch pitch.Pitch) *symbols.Symbol {
+func regPele(p pitch.Pitch) *symbols.Symbol {
 	return &symbols.Symbol{
 		Note: &symbols.Note{
-			Pitch:  pitch,
+			Pitch:  p,
 			Length: length.Length_Quarter,
 			Embellishment: &emb.Embellishment{
 				Type: emb.Type_Pele,
@@ -24,18 +24,18 @@ func regPele(pitch pitch.Pitch) *symbols.Symbol {
 	}
 }
 
-func halfPele(pitch pitch.Pitch) *symbols.Symbol {
-	return peleVar(pitch, emb.Variant_Half)
+func halfPele(p pitch.Pitch) *symbols.Symbol {
+	return peleVar(p, emb.Variant_Half)
 }
 
-func thumbPele(pitch pitch.Pitch) *symbols.Symbol {
-	return peleVar(pitch, emb.Variant_Thumb)
+func thumbPele(p pitch.Pitch) *symbols.Symbol {
+	return peleVar(p, emb.Variant_Thumb)
 }
 
-func peleVar(pitch pitch.Pitch, variant emb.Variant) *symbols.Symbol {
+func peleVar(p pitch.Pitch, variant emb.Variant) *symbols.Symbol {
 	return &symbols.Symbol{
 		Note: &symbols.Note{
-			Pitch:  pitch,
+			Pitch:  p,
 			Length: length.Length_Quarter,
 			Embellishment: &emb.Embellishment{
 				Type:    emb.Type_Pele,
@@ -113,8 +113,7 @@ func Test_peleExpander_regular_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {
@@ -200,8 +199,7 @@ func Test_peleExpander_half_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {
@@ -287,8 +285,7 @@ func Test_peleExpander_thumb_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {

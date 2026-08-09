@@ -1,0 +1,8 @@
+testonly: False
+with-expecter: True
+packages:
+  github.com/tomvodi/limepipes-plugin-music-xml/internal/interfaces:
+all: True
+dir: "{{.InterfaceDir}}/mocks"
+outpkg: "mocks"
+mockname: "{{.InterfaceName}}"

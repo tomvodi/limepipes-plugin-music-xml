@@ -1,4 +1,4 @@
-package plugin_implementation
+package pluginimplementation
 
 import (
 	"bytes"

@@ -6,6 +6,7 @@ import (
 	"github.com/goccy/go-yaml"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/measure"
 	"github.com/tomvodi/limepipes-plugin-api/musicmodel/v1/musicmodel"
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/model"
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/musicmodel/expander"
@@ -14,7 +15,12 @@ import (
 
 var embExpander = expander.NewEmbellishmentExpander()
 
-func exportToMusicXml(score *model.Score, filePath string) {
+// exportToMusicXML regenerates a reference file. Call it from a spec, run the
+// suite once, then comment the call out again — the written file becomes the
+// expectation that spec compares against from then on.
+//
+//nolint:unused // kept as the way reference files are produced
+func exportToMusicXML(score *model.Score, filePath string) {
 	f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0660)
 	Expect(err).ShouldNot(HaveOccurred())
 	defer f.Close()
@@ -23,7 +29,7 @@ func exportToMusicXml(score *model.Score, filePath string) {
 	Expect(err).ShouldNot(HaveOccurred())
 }
 
-func importFromMusicXml(filePath string) *model.Score {
+func importFromMusicXML(filePath string) *model.Score {
 	f, err := os.OpenFile(filePath, os.O_RDONLY, 0660)
 	Expect(err).ShouldNot(HaveOccurred())
 	defer f.Close()
@@ -44,6 +50,38 @@ func importFromYaml(filePath string) musicmodel.MusicModel {
 	return muMo
 }
 
+var _ = Describe("measureAttributes", func() {
+	quarters := &measure.TimeSignature{Beats: 4, BeatType: 4}
+
+	It("gives the first bar the divisions and key", func() {
+		attrs := measureAttributes(&measure.Measure{}, 0, 32)
+
+		Expect(attrs).ToNot(BeNil())
+		Expect(attrs.Divisions).To(Equal(uint8(32)))
+	})
+
+	It("adds the time signature to the first bar's attributes", func() {
+		attrs := measureAttributes(&measure.Measure{Time: quarters}, 0, 32)
+
+		Expect(attrs).ToNot(BeNil())
+		Expect(attrs.Divisions).To(Equal(uint8(32)))
+		Expect(attrs.Time).ToNot(BeNil())
+	})
+
+	It("gives a later bar attributes only to carry a time change", func() {
+		attrs := measureAttributes(&measure.Measure{Time: quarters}, 3, 32)
+
+		Expect(attrs).ToNot(BeNil())
+		Expect(attrs.Time).ToNot(BeNil())
+		// divisions and key belong to the first bar only
+		Expect(attrs.Divisions).To(Equal(uint8(0)))
+	})
+
+	It("gives a later bar without a time change no attributes at all", func() {
+		Expect(measureAttributes(&measure.Measure{}, 3, 32)).To(BeNil())
+	})
+})
+
 var _ = Describe("ScoreFromMusicModelTune", func() {
 	utils.SetupConsoleLogger()
 	var err error
@@ -54,8 +92,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/four_measures.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/four_measures.musicxml")
-			readScore = importFromMusicXml("./testfiles/four_measures.musicxml")
+			//exportToMusicXML(score, "./testfiles/four_measures.musicxml")
+			readScore = importFromMusicXML("./testfiles/four_measures.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -68,8 +106,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/all_melody_notes.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/all_melody_notes.musicxml")
-			readScore = importFromMusicXml("./testfiles/all_melody_notes.musicxml")
+			//exportToMusicXML(score, "./testfiles/all_melody_notes.musicxml")
+			readScore = importFromMusicXML("./testfiles/all_melody_notes.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -82,8 +120,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/single_graces.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/single_graces.musicxml")
-			readScore = importFromMusicXml("./testfiles/single_graces.musicxml")
+			//exportToMusicXML(score, "./testfiles/single_graces.musicxml")
+			readScore = importFromMusicXML("./testfiles/single_graces.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -96,8 +134,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/doublings.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/doublings.musicxml")
-			readScore = importFromMusicXml("./testfiles/doublings.musicxml")
+			//exportToMusicXML(score, "./testfiles/doublings.musicxml")
+			readScore = importFromMusicXML("./testfiles/doublings.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -110,8 +148,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/strikes.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/strikes.musicxml")
-			readScore = importFromMusicXml("./testfiles/strikes.musicxml")
+			//exportToMusicXML(score, "./testfiles/strikes.musicxml")
+			readScore = importFromMusicXML("./testfiles/strikes.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -124,8 +162,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/grips.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/grips.musicxml")
-			readScore = importFromMusicXml("./testfiles/grips.musicxml")
+			//exportToMusicXML(score, "./testfiles/grips.musicxml")
+			readScore = importFromMusicXML("./testfiles/grips.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -138,8 +176,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/taorluaths.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/taorluaths.musicxml")
-			readScore = importFromMusicXml("./testfiles/taorluaths.musicxml")
+			//exportToMusicXML(score, "./testfiles/taorluaths.musicxml")
+			readScore = importFromMusicXML("./testfiles/taorluaths.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -152,8 +190,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/bubblys.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/bubblys.musicxml")
-			readScore = importFromMusicXml("./testfiles/bubblys.musicxml")
+			//exportToMusicXML(score, "./testfiles/bubblys.musicxml")
+			readScore = importFromMusicXML("./testfiles/bubblys.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -166,8 +204,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/birls.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/birls.musicxml")
-			readScore = importFromMusicXml("./testfiles/birls.musicxml")
+			//exportToMusicXML(score, "./testfiles/birls.musicxml")
+			readScore = importFromMusicXML("./testfiles/birls.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -180,8 +218,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/throwds.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/throwds.musicxml")
-			readScore = importFromMusicXml("./testfiles/throwds.musicxml")
+			//exportToMusicXML(score, "./testfiles/throwds.musicxml")
+			readScore = importFromMusicXML("./testfiles/throwds.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -194,8 +232,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/peles.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/peles.musicxml")
-			readScore = importFromMusicXml("./testfiles/peles.musicxml")
+			//exportToMusicXML(score, "./testfiles/peles.musicxml")
+			readScore = importFromMusicXML("./testfiles/peles.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -208,8 +246,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/double_strikes.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/double_strikes.musicxml")
-			readScore = importFromMusicXml("./testfiles/double_strikes.musicxml")
+			//exportToMusicXML(score, "./testfiles/double_strikes.musicxml")
+			readScore = importFromMusicXML("./testfiles/double_strikes.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -222,8 +260,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/triple_strikes.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/triple_strikes.musicxml")
-			readScore = importFromMusicXml("./testfiles/triple_strikes.musicxml")
+			//exportToMusicXML(score, "./testfiles/triple_strikes.musicxml")
+			readScore = importFromMusicXML("./testfiles/triple_strikes.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -236,8 +274,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/double_grace.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/double_grace.musicxml")
-			readScore = importFromMusicXml("./testfiles/double_grace.musicxml")
+			//exportToMusicXML(score, "./testfiles/double_grace.musicxml")
+			readScore = importFromMusicXML("./testfiles/double_grace.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -250,8 +288,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/tune_with_repeats.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/tune_with_repeats.musicxml")
-			readScore = importFromMusicXml("./testfiles/tune_with_repeats.musicxml")
+			//exportToMusicXML(score, "./testfiles/tune_with_repeats.musicxml")
+			readScore = importFromMusicXML("./testfiles/tune_with_repeats.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -264,8 +302,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/accidentals.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/accidentals.musicxml")
-			readScore = importFromMusicXml("./testfiles/accidentals.musicxml")
+			//exportToMusicXML(score, "./testfiles/accidentals.musicxml")
+			readScore = importFromMusicXML("./testfiles/accidentals.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -278,8 +316,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/rests.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/rests.musicxml")
-			readScore = importFromMusicXml("./testfiles/rests.musicxml")
+			//exportToMusicXML(score, "./testfiles/rests.musicxml")
+			readScore = importFromMusicXML("./testfiles/rests.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -292,8 +330,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/dots.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/dots.musicxml")
-			readScore = importFromMusicXml("./testfiles/dots.musicxml")
+			//exportToMusicXML(score, "./testfiles/dots.musicxml")
+			readScore = importFromMusicXML("./testfiles/dots.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -306,8 +344,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/fermatas.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/fermatas.musicxml")
-			readScore = importFromMusicXml("./testfiles/fermatas.musicxml")
+			//exportToMusicXML(score, "./testfiles/fermatas.musicxml")
+			readScore = importFromMusicXML("./testfiles/fermatas.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -320,8 +358,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/ties.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/ties.musicxml")
-			readScore = importFromMusicXml("./testfiles/ties.musicxml")
+			//exportToMusicXML(score, "./testfiles/ties.musicxml")
+			readScore = importFromMusicXML("./testfiles/ties.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -334,8 +372,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/tune_with_normal_1_2_part.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/tune_with_normal_1_2_part.musicxml")
-			readScore = importFromMusicXml("./testfiles/tune_with_normal_1_2_part.musicxml")
+			//exportToMusicXML(score, "./testfiles/tune_with_normal_1_2_part.musicxml")
+			readScore = importFromMusicXML("./testfiles/tune_with_normal_1_2_part.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -348,8 +386,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/tune_with_2_of_2_part.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/tune_with_2_of_2_part.musicxml")
-			readScore = importFromMusicXml("./testfiles/tune_with_2_of_2_part.musicxml")
+			//exportToMusicXML(score, "./testfiles/tune_with_2_of_2_part.musicxml")
+			readScore = importFromMusicXML("./testfiles/tune_with_2_of_2_part.musicxml")
 		})
 
 		It("should succeed", func() {
@@ -362,8 +400,8 @@ var _ = Describe("ScoreFromMusicModelTune", func() {
 		BeforeEach(func() {
 			muMo := importFromYaml("./testfiles/irregular_groups.yaml")
 			score, err = ScoreFromMusicModelTune(muMo[0], embExpander)
-			//exportToMusicXml(score, "./testfiles/irregular_groups.musicxml")
-			readScore = importFromMusicXml("./testfiles/irregular_groups.musicxml")
+			//exportToMusicXML(score, "./testfiles/irregular_groups.musicxml")
+			readScore = importFromMusicXML("./testfiles/irregular_groups.musicxml")
 		})
 
 		It("should succeed", func() {

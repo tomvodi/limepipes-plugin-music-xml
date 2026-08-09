@@ -24,22 +24,22 @@ func regGrp() *symbols.Symbol {
 	}
 }
 
-func gGrp(pitch pitch.Pitch) *symbols.Symbol {
-	return gripVariant(pitch, emb.Variant_G)
+func gGrp(p pitch.Pitch) *symbols.Symbol {
+	return gripVariant(p, emb.Variant_G)
 }
 
-func thumbGrip(pitch pitch.Pitch) *symbols.Symbol {
-	return gripVariant(pitch, emb.Variant_Thumb)
+func thumbGrip(p pitch.Pitch) *symbols.Symbol {
+	return gripVariant(p, emb.Variant_Thumb)
 }
 
-func halfGrip(pitch pitch.Pitch) *symbols.Symbol {
-	return gripVariant(pitch, emb.Variant_Half)
+func halfGrip(p pitch.Pitch) *symbols.Symbol {
+	return gripVariant(p, emb.Variant_Half)
 }
 
-func gripVariant(pitch pitch.Pitch, variant emb.Variant) *symbols.Symbol {
+func gripVariant(p pitch.Pitch, variant emb.Variant) *symbols.Symbol {
 	return &symbols.Symbol{
 		Note: &symbols.Note{
-			Pitch:  pitch,
+			Pitch:  p,
 			Length: length.Length_Quarter,
 			Embellishment: &emb.Embellishment{
 				Type:    emb.Type_Grip,
@@ -90,8 +90,7 @@ func Test_grpExpander_regular_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {
@@ -170,8 +169,7 @@ func Test_grpExpander_g_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {
@@ -257,8 +255,7 @@ func Test_grpExpander_thumb_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {
@@ -351,8 +348,7 @@ func Test_grpExpander_half_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {

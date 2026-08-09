@@ -12,26 +12,26 @@ import (
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/utils"
 )
 
-func regTripleStrike(pitch pitch.Pitch) *symbols.Symbol {
-	return tripleStrikeVar(pitch, emb.Variant_NoVariant)
+func regTripleStrike(p pitch.Pitch) *symbols.Symbol {
+	return tripleStrikeVar(p, emb.Variant_NoVariant)
 }
 
-func halfTripleStrike(pitch pitch.Pitch) *symbols.Symbol {
-	return tripleStrikeVar(pitch, emb.Variant_Half)
+func halfTripleStrike(p pitch.Pitch) *symbols.Symbol {
+	return tripleStrikeVar(p, emb.Variant_Half)
 }
 
-func thumbTripleStrike(pitch pitch.Pitch) *symbols.Symbol {
-	return tripleStrikeVar(pitch, emb.Variant_Thumb)
+func thumbTripleStrike(p pitch.Pitch) *symbols.Symbol {
+	return tripleStrikeVar(p, emb.Variant_Thumb)
 }
 
-func gTripleStrike(pitch pitch.Pitch) *symbols.Symbol {
-	return tripleStrikeVar(pitch, emb.Variant_G)
+func gTripleStrike(p pitch.Pitch) *symbols.Symbol {
+	return tripleStrikeVar(p, emb.Variant_G)
 }
 
-func tripleStrikeVar(pitch pitch.Pitch, variant emb.Variant) *symbols.Symbol {
+func tripleStrikeVar(p pitch.Pitch, variant emb.Variant) *symbols.Symbol {
 	return &symbols.Symbol{
 		Note: &symbols.Note{
-			Pitch:  pitch,
+			Pitch:  p,
 			Length: length.Length_Quarter,
 			Embellishment: &emb.Embellishment{
 				Type:    emb.Type_TripleStrike,
@@ -118,8 +118,7 @@ func Test_tripleStrikeExpander_regular_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {
@@ -198,8 +197,7 @@ func Test_tripleStrikeExpander_g_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {
@@ -285,8 +283,7 @@ func Test_tripleStrikeExpander_thumb_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {
@@ -379,8 +376,7 @@ func Test_tripleStrikeExpander_half_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {

@@ -61,35 +61,81 @@ func findRelocatable(
 	skip map[*symbols.Symbol]bool,
 ) (relocatable, bool) {
 	for partIndex, part := range parts {
-		var open *relocatable
-
-		for measureIndex, m := range part {
-			for symbolIndex, sym := range m.Symbols {
-				switch {
-				case IsStart(sym):
-					open = &relocatable{
-						partIndex:   partIndex,
-						openMeasure: measureIndex,
-						openIndex:   symbolIndex,
-						playedIn:    playedInParts(sym.Timeline.Type),
-						marker:      sym,
-					}
-
-				case IsEnd(sym) && open != nil:
-					open.endMeasure = measureIndex
-					open.endIndex = symbolIndex
-
-					if len(open.playedIn) > 0 && !skip[open.marker] {
-						return *open, true
-					}
-
-					open = nil
-				}
-			}
+		if found, ok := findRelocatableInPart(part, partIndex, skip); ok {
+			return found, true
 		}
 	}
 
 	return relocatable{}, false
+}
+
+// findRelocatableInPart walks one part's symbols, pairing each bracket's
+// opening marker with its closing one, and returns the first pair that names
+// another part to be played in.
+func findRelocatableInPart(
+	part []*measure.Measure,
+	partIndex int,
+	skip map[*symbols.Symbol]bool,
+) (relocatable, bool) {
+	var open *relocatable
+
+	for _, at := range symbolsOf(part) {
+		if IsStart(at.symbol) {
+			open = openedAt(at, partIndex)
+
+			continue
+		}
+
+		if !IsEnd(at.symbol) || open == nil {
+			continue
+		}
+
+		open.endMeasure = at.measureIndex
+		open.endIndex = at.symbolIndex
+
+		if len(open.playedIn) > 0 && !skip[open.marker] {
+			return *open, true
+		}
+
+		open = nil
+	}
+
+	return relocatable{}, false
+}
+
+func openedAt(at positioned, partIndex int) *relocatable {
+	return &relocatable{
+		partIndex:   partIndex,
+		openMeasure: at.measureIndex,
+		openIndex:   at.symbolIndex,
+		playedIn:    playedInParts(at.symbol.Timeline.Type),
+		marker:      at.symbol,
+	}
+}
+
+// positioned is a symbol together with where it sits in its part.
+type positioned struct {
+	symbol       *symbols.Symbol
+	measureIndex int
+	symbolIndex  int
+}
+
+// symbolsOf lists a part's symbols in playing order, each with its position, so
+// that a scan over a part reads as one loop instead of two nested ones.
+func symbolsOf(part []*measure.Measure) []positioned {
+	var all []positioned
+
+	for measureIndex, m := range part {
+		for symbolIndex, sym := range m.Symbols {
+			all = append(all, positioned{
+				symbol:       sym,
+				measureIndex: measureIndex,
+				symbolIndex:  symbolIndex,
+			})
+		}
+	}
+
+	return all
 }
 
 // moveToPlayedParts copies the bracket's music into each part it is played in
@@ -247,15 +293,13 @@ func addSecondTime(
 func findFirstTimeEnd(part []*measure.Measure) (measureIndex, symbolIndex int, found bool) {
 	inFirstTime := false
 
-	for mi, m := range part {
-		for si, sym := range m.Symbols {
-			if IsStart(sym) {
-				inFirstTime = sym.Timeline.Type == tl.Type_First
-			}
+	for _, at := range symbolsOf(part) {
+		if IsStart(at.symbol) {
+			inFirstTime = at.symbol.Timeline.Type == tl.Type_First
+		}
 
-			if IsEnd(sym) && inFirstTime {
-				return mi, si, true
-			}
+		if IsEnd(at.symbol) && inFirstTime {
+			return at.measureIndex, at.symbolIndex, true
 		}
 	}
 

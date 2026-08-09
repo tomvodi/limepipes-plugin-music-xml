@@ -34,5 +34,5 @@ type EmbellishmentExpander interface {
 	ExpandModel(model musicmodel.MusicModel) Expansions
 
 	// ExpandTune expands all embellishments in music model tune
-	ExpandTune(tune *tune.Tune) Expansions
+	ExpandTune(t *tune.Tune) Expansions
 }

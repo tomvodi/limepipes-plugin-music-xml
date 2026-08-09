@@ -12,10 +12,10 @@ import (
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/utils"
 )
 
-func regDoubling(pitch pitch.Pitch) *symbols.Symbol {
+func regDoubling(p pitch.Pitch) *symbols.Symbol {
 	return &symbols.Symbol{
 		Note: &symbols.Note{
-			Pitch:  pitch,
+			Pitch:  p,
 			Length: length.Length_Quarter,
 			Embellishment: &emb.Embellishment{
 				Type: emb.Type_Doubling,
@@ -24,10 +24,10 @@ func regDoubling(pitch pitch.Pitch) *symbols.Symbol {
 	}
 }
 
-func thumbDoubling(pitch pitch.Pitch) *symbols.Symbol {
+func thumbDoubling(p pitch.Pitch) *symbols.Symbol {
 	return &symbols.Symbol{
 		Note: &symbols.Note{
-			Pitch:  pitch,
+			Pitch:  p,
 			Length: length.Length_Quarter,
 			Embellishment: &emb.Embellishment{
 				Type:    emb.Type_Doubling,
@@ -37,10 +37,10 @@ func thumbDoubling(pitch pitch.Pitch) *symbols.Symbol {
 	}
 }
 
-func halfDoubling(pitch pitch.Pitch) *symbols.Symbol {
+func halfDoubling(p pitch.Pitch) *symbols.Symbol {
 	return &symbols.Symbol{
 		Note: &symbols.Note{
-			Pitch:  pitch,
+			Pitch:  p,
 			Length: length.Length_Quarter,
 			Embellishment: &emb.Embellishment{
 				Type:    emb.Type_Doubling,
@@ -126,8 +126,7 @@ func Test_dblExpander_regular_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {
@@ -205,8 +204,7 @@ func Test_dblUnapcker_thumb_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {
@@ -284,8 +282,7 @@ func Test_dblUnapcker_half_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {

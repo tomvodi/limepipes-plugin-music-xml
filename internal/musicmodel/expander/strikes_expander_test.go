@@ -12,35 +12,35 @@ import (
 	"github.com/tomvodi/limepipes-plugin-music-xml/internal/utils"
 )
 
-func singleStrike(pitch pitch.Pitch) *symbols.Symbol {
+func singleStrike(p pitch.Pitch) *symbols.Symbol {
 	return &symbols.Symbol{
 		Note: &symbols.Note{
-			Pitch:  pitch + 1,
+			Pitch:  p + 1,
 			Length: length.Length_Quarter,
 			Embellishment: &emb.Embellishment{
 				Type:  emb.Type_Strike,
-				Pitch: pitch,
+				Pitch: p,
 			},
 		},
 	}
 }
 
-func halfStrike(pitch pitch.Pitch) *symbols.Symbol {
-	return strikeVariant(pitch, emb.Variant_Half)
+func halfStrike(p pitch.Pitch) *symbols.Symbol {
+	return strikeVariant(p, emb.Variant_Half)
 }
 
-func thumbStrike(pitch pitch.Pitch) *symbols.Symbol {
-	return strikeVariant(pitch, emb.Variant_Thumb)
+func thumbStrike(p pitch.Pitch) *symbols.Symbol {
+	return strikeVariant(p, emb.Variant_Thumb)
 }
 
-func gStrike(pitch pitch.Pitch) *symbols.Symbol {
-	return strikeVariant(pitch, emb.Variant_G)
+func gStrike(p pitch.Pitch) *symbols.Symbol {
+	return strikeVariant(p, emb.Variant_G)
 }
 
-func strikeVariant(pitch pitch.Pitch, variant emb.Variant) *symbols.Symbol {
+func strikeVariant(p pitch.Pitch, variant emb.Variant) *symbols.Symbol {
 	return &symbols.Symbol{
 		Note: &symbols.Note{
-			Pitch:  pitch,
+			Pitch:  p,
 			Length: length.Length_Quarter,
 			Embellishment: &emb.Embellishment{
 				Type:    emb.Type_Strike,
@@ -119,8 +119,7 @@ func Test_strikesExpander_single_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {
@@ -207,8 +206,7 @@ func Test_strikesExpander_half_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {
@@ -295,8 +293,7 @@ func Test_strikesExpander_thumb_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {
@@ -376,8 +373,7 @@ func Test_strikesExpander_g_ExpandSymbol(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
+		t.Run(tt.name, func(_ *testing.T) {
 			f := &fields{}
 
 			if tt.prepare != nil {

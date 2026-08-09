@@ -68,16 +68,16 @@ func ScoreFromMusicModelTune(
 	// from one measure to the next.
 	var openEnding []int
 
-	for _, measure := range normalized.Measures {
+	for _, m := range normalized.Measures {
 		// A staff can start without carrying anything of its own. Such a
 		// measure has no MusicXML equivalent and would only shift the
 		// numbering of the ones that follow.
-		if isEmptyMeasure(measure) {
+		if isEmptyMeasure(m) {
 			continue
 		}
 
-		xmlMeasure := xmlMeasureFromMusicModelMeasure(measure, exps, len(measures), 32)
-		openEnding = addEndings(&xmlMeasure, measure, openEnding)
+		xmlMeasure := xmlMeasureFromMusicModelMeasure(m, exps, len(measures), 32)
+		openEnding = addEndings(&xmlMeasure, m, openEnding)
 
 		measures = append(measures, xmlMeasure)
 	}
@@ -96,27 +96,27 @@ func ScoreFromMusicModelTune(
 					XMLName: xml.Name{
 						Local: "score-part",
 					},
-					Id:   "P1",
+					ID:   "P1",
 					Name: "Bagpipe",
 					Instrument: model.ScoreInstrument{
 						XMLName: xml.Name{
 							Local: "score-instrument",
 						},
-						Id:   "P1-I1",
+						ID:   "P1-I1",
 						Name: "Bagpipe",
 					},
 					MidiDevice: model.MidiDevice{
 						XMLName: xml.Name{
 							Local: "midi-device",
 						},
-						Id:   "P1-I1",
+						ID:   "P1-I1",
 						Port: 1,
 					},
 					MidiInstrument: model.MidiInstrument{
 						XMLName: xml.Name{
 							Local: "midi-instrument",
 						},
-						Id:      "P1-I1",
+						ID:      "P1-I1",
 						Channel: 1,
 						Program: 110,
 						Volume:  78.7402,
@@ -129,7 +129,7 @@ func ScoreFromMusicModelTune(
 			XMLName: xml.Name{
 				Local: "part",
 			},
-			Id:       "P1",
+			ID:       "P1",
 			Measures: measures,
 		},
 	}
@@ -179,7 +179,7 @@ func isEmptyMeasure(m *measure.Measure) bool {
 }
 
 func xmlMeasureFromMusicModelMeasure(
-	measure *measure.Measure,
+	m *measure.Measure,
 	exps interfaces.Expansions,
 	idx int,
 	divisions uint8,
@@ -188,54 +188,72 @@ func xmlMeasureFromMusicModelMeasure(
 		XMLName: xml.Name{
 			Local: "measure",
 		},
-		Number: idx + 1,
+		Number:     idx + 1,
+		Attributes: measureAttributes(m, idx, divisions),
+		Barlines:   measureBarlines(m),
+		Notes:      measureNotes(m, exps, divisions),
 	}
+
+	return xmlMeasure
+}
+
+// measureAttributes builds the attributes block. The first bar of the tune
+// carries the divisions and key; any bar can carry a time signature.
+func measureAttributes(m *measure.Measure, idx int, divisions uint8) *model.Attributes {
+	var attrs *model.Attributes
+
 	if idx == 0 {
-		xmlMeasure.Attributes = model.NewAttributesWithKey(divisions)
+		attrs = model.NewAttributesWithKey(divisions)
 	}
-	if measure.Time != nil {
-		xmlTime := model.NewTime(measure.Time)
-		if xmlMeasure.Attributes != nil {
-			xmlMeasure.Attributes.Time = xmlTime
-		} else {
-			xmlMeasure.Attributes = model.NewAttributesMinimal()
-			xmlMeasure.Attributes.Time = xmlTime
-		}
+
+	if m.Time == nil {
+		return attrs
 	}
-	if measure.LeftBarline != nil {
-		bar := barline.FromMusicModel(measure.LeftBarline, barline.Left)
-		xmlMeasure.Barlines = append(xmlMeasure.Barlines, bar)
+
+	if attrs == nil {
+		attrs = model.NewAttributesMinimal()
 	}
-	if measure.RightBarline != nil {
-		bar := barline.FromMusicModel(measure.RightBarline, barline.Right)
-		xmlMeasure.Barlines = append(xmlMeasure.Barlines, bar)
+	attrs.Time = model.NewTime(m.Time)
+
+	return attrs
+}
+
+func measureBarlines(m *measure.Measure) []barline.Barline {
+	var bars []barline.Barline
+
+	if m.LeftBarline != nil {
+		bars = append(bars, barline.FromMusicModel(m.LeftBarline, barline.Left))
 	}
-	var measureNotes []model.Note
+
+	if m.RightBarline != nil {
+		bars = append(bars, barline.FromMusicModel(m.RightBarline, barline.Right))
+	}
+
+	return bars
+}
+
+// measureNotes converts the measure's symbols into MusicXML notes.
+//
+// A tuplet is its own symbol bracketing a run of notes: every note inside the
+// bracket carries a time-modification, and the first and last also carry the
+// tuplet start/stop notation.
+func measureNotes(
+	m *measure.Measure,
+	exps interfaces.Expansions,
+	divisions uint8,
+) []model.Note {
+	var notes []model.Note
+
 	noteCtx := &model.NoteContext{}
 
-	// A tuplet is its own symbol bracketing a run of notes. Every note inside
-	// the bracket carries a time-modification, and the first and last one also
-	// carry the tuplet start/stop notation.
 	var pendingTupletStart *mmtuplet.Tuplet
 
-	for _, symbol := range measure.Symbols {
-		if symbol.Tuplet != nil {
-			switch symbol.Tuplet.BoundaryType {
-			case boundary.Boundary_Start:
-				noteCtx.CurrentTuplet = symbol.Tuplet
-				pendingTupletStart = symbol.Tuplet
-			case boundary.Boundary_End:
-				if len(measureNotes) > 0 {
-					last := &measureNotes[len(measureNotes)-1]
-					last.SetTuplet(tuplet.FromMusicModel(symbol.Tuplet))
-				}
-				noteCtx.CurrentTuplet = nil
-			}
+	for _, symbol := range m.Symbols {
+		switch {
+		case symbol.Tuplet != nil:
+			pendingTupletStart = openOrCloseTuplet(symbol.Tuplet, noteCtx, notes, pendingTupletStart)
 
-			continue
-		}
-
-		if symbol.IsNote() {
+		case symbol.IsNote():
 			symbolNotes := model.NotesFromMusicModel(
 				symbol,
 				exps.Get(symbol.Note),
@@ -248,13 +266,38 @@ func xmlMeasureFromMusicModelMeasure(
 				melody.SetTuplet(tuplet.FromMusicModel(pendingTupletStart))
 				pendingTupletStart = nil
 			}
-			measureNotes = append(measureNotes, symbolNotes...)
-		}
-		if symbol.Rest != nil {
-			rest := model.RestFromMusicModel(symbol.Rest, divisions)
-			measureNotes = append(measureNotes, rest)
+
+			notes = append(notes, symbolNotes...)
+
+		case symbol.Rest != nil:
+			notes = append(notes, model.RestFromMusicModel(symbol.Rest, divisions))
 		}
 	}
-	xmlMeasure.Notes = measureNotes
-	return xmlMeasure
+
+	return notes
+}
+
+// openOrCloseTuplet records a tuplet boundary. Opening one leaves it pending so
+// the next melody note can carry the start notation; closing one puts the stop
+// notation on the last note written so far.
+func openOrCloseTuplet(
+	tpl *mmtuplet.Tuplet,
+	noteCtx *model.NoteContext,
+	notes []model.Note,
+	pendingStart *mmtuplet.Tuplet,
+) *mmtuplet.Tuplet {
+	switch tpl.BoundaryType {
+	case boundary.Boundary_Start:
+		noteCtx.CurrentTuplet = tpl
+
+		return tpl
+
+	case boundary.Boundary_End:
+		if len(notes) > 0 {
+			notes[len(notes)-1].SetTuplet(tuplet.FromMusicModel(tpl))
+		}
+		noteCtx.CurrentTuplet = nil
+	}
+
+	return pendingStart
 }

@@ -48,29 +48,9 @@ func NotesFromMusicModel(
 	noteCtx *NoteContext,
 	divisions uint8,
 ) []Note {
-	var notes []Note
-
 	n := sym.Note
 
-	if n.Embellishment != nil && expanded != nil {
-
-		for i, gracePitch := range expanded {
-			grace := Note{
-				XMLName: xml.Name{
-					Local: "note",
-				},
-				Grace: NewGrace(),
-				Pitch: PitchFromMusicModel(gracePitch, accidental.Accidental_NoAccidental),
-				Voice: 1,
-				Type:  typeFromLength(length.Length_Thirtysecond),
-				Stem:  &stemUp,
-			}
-			if len(expanded) > 1 {
-				grace.Beams = embellishmentBeamsForPosition(i, len(expanded))
-			}
-			notes = append(notes, grace)
-		}
-	}
+	notes := graceNotesFor(n, expanded)
 
 	xmlNote := Note{
 		XMLName: xml.Name{
@@ -82,38 +62,81 @@ func NotesFromMusicModel(
 		Type:       typeFromLength(n.Length),
 		Stem:       stemFromLength(n.Length),
 		Accidental: NewAccidentalFromMusicModel(n.Accidental),
+		Dots:       dotsFor(n),
+		Notations:  notationsFor(n),
 	}
-	if n.Dots > 0 {
-		for i := uint32(0); i < n.Dots; i++ {
-			xmlNote.Dots = append(xmlNote.Dots, NewDot())
-		}
-	}
+
 	if noteCtx.CurrentTuplet != nil {
 		xmlNote.TimeModification = NewTimeModification(noteCtx.CurrentTuplet)
 	}
-	var notations *Notations
-	if n.Fermata || n.Tie != tie.Tie_NoTie {
-		notations = NewNotations()
+
+	return append(notes, xmlNote)
+}
+
+// graceNotesFor renders an embellishment as the run of grace notes it is played
+// as. A run of more than one is beamed together.
+func graceNotesFor(n *symbols.Note, expanded []pitch.Pitch) []Note {
+	if n.Embellishment == nil || expanded == nil {
+		return nil
 	}
+
+	graces := make([]Note, 0, len(expanded))
+
+	for i, gracePitch := range expanded {
+		grace := Note{
+			XMLName: xml.Name{
+				Local: "note",
+			},
+			Grace: NewGrace(),
+			Pitch: PitchFromMusicModel(gracePitch, accidental.Accidental_NoAccidental),
+			Voice: 1,
+			Type:  typeFromLength(length.Length_Thirtysecond),
+			Stem:  &stemUp,
+		}
+		if len(expanded) > 1 {
+			grace.Beams = embellishmentBeamsForPosition(i, len(expanded))
+		}
+
+		graces = append(graces, grace)
+	}
+
+	return graces
+}
+
+func dotsFor(n *symbols.Note) []Dot {
+	if n.Dots == 0 {
+		return nil
+	}
+
+	dots := make([]Dot, 0, n.Dots)
+	for i := uint32(0); i < n.Dots; i++ {
+		dots = append(dots, NewDot())
+	}
+
+	return dots
+}
+
+// notationsFor collects the marks that hang off a note rather than being part
+// of it. Tuplet notations are added later by the caller walking the measure.
+func notationsFor(n *symbols.Note) *Notations {
+	if !n.Fermata && n.Tie == tie.Tie_NoTie {
+		return nil
+	}
+
+	notations := NewNotations()
 
 	if n.Fermata {
 		notations.Fermata = fermata.NewFermata(fermata.Upright)
 	}
-	if n.Tie != tie.Tie_NoTie {
-		switch n.Tie {
-		case tie.Tie_Start:
-			notations.Tied = tied.NewTied(tied.Start)
-		case tie.Tie_End:
-			notations.Tied = tied.NewTied(tied.Stop)
-		}
-	}
-	if notations != nil {
-		xmlNote.Notations = notations
+
+	switch n.Tie {
+	case tie.Tie_Start:
+		notations.Tied = tied.NewTied(tied.Start)
+	case tie.Tie_End:
+		notations.Tied = tied.NewTied(tied.Stop)
 	}
 
-	notes = append(notes, xmlNote)
-
-	return notes
+	return notations
 }
 
 // SetTuplet attaches a tuplet notation to the note, creating the notations

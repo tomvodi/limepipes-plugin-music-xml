@@ -51,10 +51,10 @@ func createPitch(
 		Alter:   alter,
 	}
 	if acc == accidental.Accidental_Sharp {
-		retPitch.Alter += 1
+		retPitch.Alter++
 	}
 	if acc == accidental.Accidental_Flat {
-		retPitch.Alter -= 1
+		retPitch.Alter--
 	}
 
 	return retPitch

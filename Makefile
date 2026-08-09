@@ -1,3 +1,4 @@
+GOBIN ?= $$(go env GOPATH)/bin
 
 .PHONY: test test-cover lint cover-html
 
@@ -18,3 +19,16 @@ lint:
 
 cover-html: test-cover
 	go tool cover -html=cover.out
+
+# Pinned rather than @latest: newer releases of this tool require a newer Go
+# than the one this module builds with.
+GO_TEST_COVERAGE_VERSION ?= v2.12.0
+
+.PHONY: install-go-test-coverage
+install-go-test-coverage:
+	go install github.com/vladopajic/go-test-coverage/v2@$(GO_TEST_COVERAGE_VERSION)
+
+.PHONY: check-coverage
+check-coverage: install-go-test-coverage
+	go test ./... -coverprofile=./cover.out -covermode=atomic -coverpkg=./...
+	${GOBIN}/go-test-coverage --config=./.testcoverage.yaml
